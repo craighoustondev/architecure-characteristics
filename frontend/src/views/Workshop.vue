@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import CharacteristicCard from '../components/CharacteristicCard.vue'
 
 interface Characteristic {
@@ -118,7 +118,16 @@ const selectedCharacteristics = ref<Set<string>>(new Set())
 const MAX_SELECTIONS = 7
 const showLimitWarning = ref(false)
 
+const canSelectCharacteristics = () => {
+  return systemAreas.value.length > 0
+}
+
 const toggleSelection = (name: string) => {
+  // Check if system areas are defined first
+  if (!canSelectCharacteristics()) {
+    return
+  }
+
   if (selectedCharacteristics.value.has(name)) {
     selectedCharacteristics.value.delete(name)
     showLimitWarning.value = false
@@ -148,6 +157,19 @@ const continueToNextStep = () => {
     console.log('Selected characteristics:', Array.from(selectedCharacteristics.value))
   }
 }
+
+// Watch for when all system areas are removed and clear selections
+watch(
+  () => systemAreas.value.length,
+  (newLength) => {
+    if (newLength === 0) {
+      // Clear all selected characteristics when no system areas exist
+      selectedCharacteristics.value.clear()
+      selectedCharacteristics.value = new Set()
+      showLimitWarning.value = false
+    }
+  }
+)
 </script>
 
 <template>
@@ -192,6 +214,10 @@ const continueToNextStep = () => {
       <h2>Architecture Characteristics</h2>
       <p>Select 7 characteristics that are most relevant to your system areas.</p>
       
+      <div v-if="!canSelectCharacteristics()" class="info-message">
+        You must add at least one system area before selecting characteristics.
+      </div>
+      
       <div class="selection-status">
         <div class="counter">
           Selected: {{ selectedCharacteristics.size }} / {{ MAX_SELECTIONS }}
@@ -210,13 +236,14 @@ const continueToNextStep = () => {
         </button>
       </div>
       
-      <div class="characteristics-grid">
+      <div class="characteristics-grid" :class="{ 'grid-disabled': !canSelectCharacteristics() }">
         <CharacteristicCard
           v-for="characteristic in characteristics" 
           :key="characteristic.name"
           :name="characteristic.name"
           :description="characteristic.description"
           :is-selected="isSelected(characteristic.name)"
+          :class="{ disabled: !canSelectCharacteristics() }"
           @click="toggleSelection(characteristic.name)"
         />
       </div>
@@ -336,6 +363,16 @@ section {
   background-color: #fecaca;
 }
 
+.info-message {
+  padding: 1rem;
+  background-color: #dbeafe;
+  border: 2px solid #3b82f6;
+  border-radius: 0.5rem;
+  color: #1e40af;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
 .selection-status {
   display: flex;
   align-items: center;
@@ -393,6 +430,16 @@ section {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.5rem;
   margin-top: 2rem;
+}
+
+.characteristics-grid.grid-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.characteristics-grid :deep(.characteristic-card.disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
 

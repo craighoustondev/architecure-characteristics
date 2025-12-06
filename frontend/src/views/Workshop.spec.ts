@@ -162,7 +162,100 @@ describe('Workshop Page', () => {
       expect(selectedCards).toHaveLength(0)
     })
 
-    it('should select a card when clicked', async () => {
+    it('should not allow selecting characteristics when no system areas are defined', async () => {
+      const cards = wrapper.findAll('.characteristic-card')
+      const firstCard = cards[0]!
+      
+      // Try to select a characteristic without adding a system area
+      await firstCard.trigger('click')
+      
+      // Card should not be selected
+      expect(firstCard.classes()).not.toContain('selected')
+    })
+
+    it('should show a message when no system areas are defined', () => {
+      expect(wrapper.text()).toMatch(/add.*system area.*before selecting/i)
+    })
+
+    it('should have disabled appearance on characteristics when no system areas exist', () => {
+      const cards = wrapper.findAll('.characteristic-card')
+      
+      // Cards should have a disabled class or attribute
+      cards.forEach((card: DOMWrapper<Element>) => {
+        expect(card.classes()).toContain('disabled')
+      })
+    })
+
+    it('should allow selecting characteristics after adding a system area', async () => {
+      const input = wrapper.find('input[type="text"]')
+      const addButton = wrapper.find('button')
+      
+      // Add a system area
+      await input.setValue('Payment Processing')
+      await addButton.trigger('click')
+      
+      // Now try to select a characteristic
+      const cards = wrapper.findAll('.characteristic-card')
+      const firstCard = cards[0]!
+      await firstCard.trigger('click')
+      
+      // Card should now be selected
+      expect(firstCard.classes()).toContain('selected')
+    })
+
+    it('should clear all selected characteristics when all system areas are removed', async () => {
+      const input = wrapper.find('input[type="text"]')
+      const addButton = wrapper.find('button')
+      
+      // Add a system area
+      await input.setValue('Payment Processing')
+      await addButton.trigger('click')
+      
+      // Select some characteristics
+      const cards = wrapper.findAll('.characteristic-card')
+      await cards[0]!.trigger('click')
+      await cards[1]!.trigger('click')
+      await cards[2]!.trigger('click')
+      
+      // Verify they are selected
+      expect(cards[0]!.classes()).toContain('selected')
+      expect(cards[1]!.classes()).toContain('selected')
+      expect(cards[2]!.classes()).toContain('selected')
+      expect(wrapper.text()).toMatch(/Selected:.*3.*\/.*7/)
+      
+      // Remove the system area
+      const removeButtons = wrapper.findAll('.remove-button')
+      await removeButtons[0]!.trigger('click')
+      
+      // All characteristics should now be deselected
+      expect(cards[0]!.classes()).not.toContain('selected')
+      expect(cards[1]!.classes()).not.toContain('selected')
+      expect(cards[2]!.classes()).not.toContain('selected')
+      expect(wrapper.text()).toMatch(/Selected:.*0.*\/.*7/)
+    })
+
+    it('should remove disabled state from characteristics after adding a system area', async () => {
+      const input = wrapper.find('input[type="text"]')
+      const addButton = wrapper.find('button')
+      
+      // Add a system area
+      await input.setValue('Payment Processing')
+      await addButton.trigger('click')
+      
+      // Cards should no longer have disabled class
+      const cards = wrapper.findAll('.characteristic-card')
+      cards.forEach((card: DOMWrapper<Element>) => {
+        expect(card.classes()).not.toContain('disabled')
+      })
+    })
+
+    it('should select a card when clicked (after system area added)', async () => {
+      // Add a system area first
+      const input = wrapper.find('input[type="text"]')
+      const addButton = wrapper.find('button')
+      await input.setValue('Payment Processing')
+      await addButton.trigger('click')
+      
       const cards = wrapper.findAll('.characteristic-card')
       const firstCard = cards[0]!
       
@@ -172,6 +265,12 @@ describe('Workshop Page', () => {
     })
 
     it('should deselect a card when clicked again', async () => {
+      // Add a system area first
+      const input = wrapper.find('input[type="text"]')
+      const addButton = wrapper.find('button')
+      await input.setValue('Payment Processing')
+      await addButton.trigger('click')
+      
       const cards = wrapper.findAll('.characteristic-card')
       const firstCard = cards[0]!
       
@@ -185,6 +284,12 @@ describe('Workshop Page', () => {
     })
 
     it('should allow multiple cards to be selected', async () => {
+      // Add a system area first
+      const input = wrapper.find('input[type="text"]')
+      const addButton = wrapper.find('button')
+      await input.setValue('Payment Processing')
+      await addButton.trigger('click')
+      
       const cards = wrapper.findAll('.characteristic-card')
       
       // Select first and second cards
@@ -198,11 +303,21 @@ describe('Workshop Page', () => {
   })
 
   describe('Select 7 Characteristics Workflow', () => {
+    // Helper to add a system area before selecting characteristics
+    const addSystemArea = async () => {
+      const input = wrapper.find('input[type="text"]')
+      const addButton = wrapper.find('button')
+      await input.setValue('Test System Area')
+      await addButton.trigger('click')
+    }
+
     it('should display a counter showing number of selected characteristics', () => {
       expect(wrapper.text()).toMatch(/Selected:.*0.*\/.*7/)
     })
 
     it('should update the counter when characteristics are selected', async () => {
+      await addSystemArea()
+      
       const cards = wrapper.findAll('.characteristic-card')
       
       await cards[0]!.trigger('click')
@@ -223,6 +338,8 @@ describe('Workshop Page', () => {
     })
 
     it('should have "Continue" button disabled when less than 7 characteristics are selected', async () => {
+      await addSystemArea()
+      
       const buttons = wrapper.findAll('button')
       const continueButton = buttons.find(btn => btn.text().includes('Continue'))
       
@@ -238,6 +355,8 @@ describe('Workshop Page', () => {
     })
 
     it('should enable "Continue" button when exactly 7 characteristics are selected', async () => {
+      await addSystemArea()
+      
       const cards = wrapper.findAll('.characteristic-card')
       
       // Select exactly 7 characteristics
@@ -252,6 +371,8 @@ describe('Workshop Page', () => {
     })
 
     it('should prevent selecting more than 7 characteristics', async () => {
+      await addSystemArea()
+      
       const cards = wrapper.findAll('.characteristic-card')
       
       // Select 7 characteristics
@@ -270,6 +391,8 @@ describe('Workshop Page', () => {
     })
 
     it('should show a message when trying to select more than 7', async () => {
+      await addSystemArea()
+      
       const cards = wrapper.findAll('.characteristic-card')
       
       // Select 7 characteristics
@@ -284,6 +407,8 @@ describe('Workshop Page', () => {
     })
 
     it('should allow deselecting a characteristic when at the limit', async () => {
+      await addSystemArea()
+      
       const cards = wrapper.findAll('.characteristic-card')
       
       // Select 7 characteristics
