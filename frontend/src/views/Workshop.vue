@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import CharacteristicCard from '../components/CharacteristicCard.vue'
 
 interface Characteristic {
   name: string
@@ -120,16 +121,14 @@ const isSelected = (name: string) => {
     <p>Select architecture characteristics...</p>
     
     <div class="characteristics-grid">
-      <div 
+      <CharacteristicCard
         v-for="characteristic in characteristics" 
         :key="characteristic.name"
-        class="characteristic-card"
-        :class="{ selected: isSelected(characteristic.name) }"
+        :name="characteristic.name"
+        :description="characteristic.description"
+        :is-selected="isSelected(characteristic.name)"
         @click="toggleSelection(characteristic.name)"
-      >
-        <h3>{{ characteristic.name }}</h3>
-        <p>{{ characteristic.description }}</p>
-      </div>
+      />
     </div>
   </div>
 </template>
@@ -151,44 +150,6 @@ h1 {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.5rem;
   margin-top: 2rem;
-}
-
-.characteristic-card {
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 1.5rem;
-  transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s, border-color 0.2s;
-}
-
-.characteristic-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-}
-
-.characteristic-card.selected {
-  background-color: #dcfce7;
-  border-color: #16a34a;
-  border-width: 2px;
-}
-
-.characteristic-card.selected:hover {
-  background-color: #bbf7d0;
-}
-
-.characteristic-card h3 {
-  margin: 0 0 1rem 0;
-  color: #000000;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.characteristic-card p {
-  margin: 0;
-  color: #4b5563;
-  line-height: 1.6;
-  font-size: 0.95rem;
 }
 </style>
 
