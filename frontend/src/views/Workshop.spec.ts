@@ -572,5 +572,169 @@ describe('Workshop Page', () => {
       expect(otherSection.classes()).toContain('secondary')
     })
   })
+
+  describe('Navigate Back from Narrow Down Phase', () => {
+    // Helper to add a system area and select 7 characteristics
+    const setupSevenSelected = async () => {
+      const input = wrapper.find('input[type="text"]')
+      const addButton = wrapper.find('button')
+      await input.setValue('Test System Area')
+      await addButton.trigger('click')
+      
+      const cards = wrapper.findAll('.characteristic-card')
+      for (let i = 0; i < 7; i++) {
+        await cards[i]!.trigger('click')
+      }
+    }
+
+    it('should display a "Back" button in the narrow down phase', async () => {
+      await setupSevenSelected()
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      await continueButton!.trigger('click')
+      
+      // Should have a back button
+      const backButton = wrapper.findAll('button').find(btn => btn.text().includes('Back'))
+      expect(backButton).toBeDefined()
+      expect(backButton!.exists()).toBe(true)
+    })
+
+    it('should return to initial phase when Back button is clicked', async () => {
+      await setupSevenSelected()
+      
+      // Move to narrow down phase
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      await continueButton!.trigger('click')
+      
+      // Verify we're in narrow down phase
+      expect(wrapper.text()).toMatch(/narrow.*down.*3/i)
+      
+      // Click back button
+      const backButton = wrapper.findAll('button').find(btn => btn.text().includes('Back'))
+      await backButton!.trigger('click')
+      
+      // Should be back in initial phase
+      expect(wrapper.text()).toContain('Select 7 characteristics')
+      expect(wrapper.text()).toMatch(/Selected:.*\d+.*\/.*7/)
+    })
+
+    it('should preserve the 7 selected characteristics when navigating back', async () => {
+      await setupSevenSelected()
+      
+      // Move to narrow down phase
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      await continueButton!.trigger('click')
+      
+      // Click back button
+      const backButton = wrapper.findAll('button').find(btn => btn.text().includes('Back'))
+      await backButton!.trigger('click')
+      
+      // The 7 characteristics should still be selected
+      const cards = wrapper.findAll('.characteristic-card')
+      expect(cards[0]!.classes()).toContain('selected')
+      expect(cards[1]!.classes()).toContain('selected')
+      expect(cards[2]!.classes()).toContain('selected')
+      expect(cards[3]!.classes()).toContain('selected')
+      expect(cards[4]!.classes()).toContain('selected')
+      expect(cards[5]!.classes()).toContain('selected')
+      expect(cards[6]!.classes()).toContain('selected')
+      
+      // Counter should show 7 / 7
+      expect(wrapper.text()).toMatch(/Selected:.*7.*\/.*7/)
+    })
+
+    it('should allow deselecting characteristics after navigating back', async () => {
+      await setupSevenSelected()
+      
+      // Move to narrow down phase and back
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      await continueButton!.trigger('click')
+      
+      const backButton = wrapper.findAll('button').find(btn => btn.text().includes('Back'))
+      await backButton!.trigger('click')
+      
+      // Deselect one characteristic
+      const cards = wrapper.findAll('.characteristic-card')
+      await cards[0]!.trigger('click')
+      
+      expect(cards[0]!.classes()).not.toContain('selected')
+      expect(wrapper.text()).toMatch(/Selected:.*6.*\/.*7/)
+    })
+
+    it('should allow selecting additional characteristics after navigating back', async () => {
+      await setupSevenSelected()
+      
+      // Move to narrow down phase and back
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      await continueButton!.trigger('click')
+      
+      const backButton = wrapper.findAll('button').find(btn => btn.text().includes('Back'))
+      await backButton!.trigger('click')
+      
+      // Deselect one
+      const cards = wrapper.findAll('.characteristic-card')
+      await cards[0]!.trigger('click')
+      expect(wrapper.text()).toMatch(/Selected:.*6.*\/.*7/)
+      
+      // Select a different one (the 8th card which wasn't selected)
+      await cards[7]!.trigger('click')
+      expect(cards[7]!.classes()).toContain('selected')
+      expect(wrapper.text()).toMatch(/Selected:.*7.*\/.*7/)
+    })
+
+    it('should disable Continue button after navigating back if less than 7 are selected', async () => {
+      await setupSevenSelected()
+      
+      // Move to narrow down phase and back
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      await continueButton!.trigger('click')
+      
+      const backButton = wrapper.findAll('button').find(btn => btn.text().includes('Back'))
+      await backButton!.trigger('click')
+      
+      // Deselect one characteristic
+      const cards = wrapper.findAll('.characteristic-card')
+      await cards[0]!.trigger('click')
+      
+      // Continue button should be disabled
+      buttons = wrapper.findAll('button')
+      const newContinueButton = buttons.find(btn => btn.text().includes('Continue'))
+      expect(newContinueButton!.attributes('disabled')).toBeDefined()
+    })
+
+    it('should clear final selections when navigating back and forward again', async () => {
+      await setupSevenSelected()
+      
+      // Move to narrow down phase
+      let buttons = wrapper.findAll('button')
+      let continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      await continueButton!.trigger('click')
+      
+      // Select 2 final characteristics
+      const selectedSection = wrapper.find('.selected-characteristics-section')
+      const selectedCards = selectedSection.findAll('.characteristic-card')
+      await selectedCards[0]!.trigger('click')
+      await selectedCards[1]!.trigger('click')
+      expect(wrapper.text()).toMatch(/Selected:.*2.*\/.*3/)
+      
+      // Go back
+      const backButton = wrapper.findAll('button').find(btn => btn.text().includes('Back'))
+      await backButton!.trigger('click')
+      
+      // Go forward again
+      buttons = wrapper.findAll('button')
+      continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      await continueButton!.trigger('click')
+      
+      // Final selections should be cleared (reset to 0)
+      expect(wrapper.text()).toMatch(/Selected:.*0.*\/.*3/)
+    })
+  })
 })
 

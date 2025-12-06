@@ -182,6 +182,15 @@ const continueToNextStep = () => {
   }
 }
 
+const goBackToInitialPhase = () => {
+  // Return to initial phase
+  phase.value = 'initial'
+  // Restore the 7 selected characteristics from candidates
+  selectedCharacteristics.value = new Set(candidateCharacteristics.value)
+  // Clear final selections (they'll be reset if user continues again)
+  finalSelections.value.clear()
+}
+
 // Get characteristics that were not in the top 7
 const getOtherCharacteristics = () => {
   return characteristics.filter(
@@ -296,6 +305,13 @@ watch(
         <div class="counter">
           Selected: {{ finalSelections.size }} / {{ SUGGESTED_FINAL }}
         </div>
+        
+        <button 
+          class="back-button"
+          @click="goBackToInitialPhase"
+        >
+          Back to initial selection
+        </button>
       </div>
 
       <!-- Selected 7 Characteristics (Prominent) -->
@@ -505,6 +521,26 @@ section {
 .continue-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.back-button {
+  padding: 0.75rem 2rem;
+  background-color: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #4b5563;
+}
+
+.back-button:active {
+  background-color: #374151;
 }
 
 .characteristics-grid {
