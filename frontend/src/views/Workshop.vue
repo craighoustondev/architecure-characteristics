@@ -16,7 +16,7 @@
 }
 
 h1 {
-  color: #22c55e;
+  color: #000000;
   margin-bottom: 1rem;
 }
 </style>

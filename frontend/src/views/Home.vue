@@ -45,7 +45,7 @@ const startWorkshop = async () => {
 h1 {
   font-size: 3rem;
   font-weight: 700;
-  color: #22c55e;
+  color: #000000;
   margin: 0 0 2rem 0;
   text-align: center;
 }
@@ -57,7 +57,7 @@ h1 {
 
 .description p {
   margin: 1.5rem 0;
-  color: #16a34a;
+  color: #000000;
   font-size: 1.125rem;
 }
 
