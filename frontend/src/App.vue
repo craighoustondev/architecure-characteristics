@@ -26,7 +26,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 100vh;
   padding: 2rem;
   max-width: 800px;
@@ -36,7 +36,7 @@
 h1 {
   font-size: 3rem;
   font-weight: 700;
-  color: #2c3e50;
+  color: #22c55e;
   margin: 0 0 2rem 0;
   text-align: center;
 }
@@ -48,7 +48,7 @@ h1 {
 
 .description p {
   margin: 1.5rem 0;
-  color: #4a5568;
+  color: #16a34a;
   font-size: 1.125rem;
 }
 </style>
