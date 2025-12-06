@@ -115,11 +115,19 @@ const removeSystemArea = (index: number) => {
 
 // Characteristics selection state
 const selectedCharacteristics = ref<Set<string>>(new Set())
+const MAX_SELECTIONS = 7
+const showLimitWarning = ref(false)
 
 const toggleSelection = (name: string) => {
   if (selectedCharacteristics.value.has(name)) {
     selectedCharacteristics.value.delete(name)
+    showLimitWarning.value = false
   } else {
+    // Check if we're at the limit
+    if (selectedCharacteristics.value.size >= MAX_SELECTIONS) {
+      showLimitWarning.value = true
+      return
+    }
     selectedCharacteristics.value.add(name)
   }
   // Trigger reactivity
@@ -128,6 +136,17 @@ const toggleSelection = (name: string) => {
 
 const isSelected = (name: string) => {
   return selectedCharacteristics.value.has(name)
+}
+
+const canContinue = () => {
+  return selectedCharacteristics.value.size === MAX_SELECTIONS
+}
+
+const continueToNextStep = () => {
+  if (canContinue()) {
+    // TODO: Navigate to next step
+    console.log('Selected characteristics:', Array.from(selectedCharacteristics.value))
+  }
 }
 </script>
 
@@ -171,7 +190,25 @@ const isSelected = (name: string) => {
     <!-- Characteristics Section -->
     <section class="characteristics-section">
       <h2>Architecture Characteristics</h2>
-      <p>Select the characteristics that are relevant to your system areas.</p>
+      <p>Select 7 characteristics that are most relevant to your system areas.</p>
+      
+      <div class="selection-status">
+        <div class="counter">
+          Selected: {{ selectedCharacteristics.size }} / {{ MAX_SELECTIONS }}
+        </div>
+        
+        <div v-if="showLimitWarning" class="warning-message">
+          You've reached the maximum of {{ MAX_SELECTIONS }} characteristics. Deselect one to choose a different characteristic.
+        </div>
+        
+        <button 
+          class="continue-button"
+          :disabled="!canContinue()"
+          @click="continueToNextStep"
+        >
+          Continue
+        </button>
+      </div>
       
       <div class="characteristics-grid">
         <CharacteristicCard
@@ -297,6 +334,58 @@ section {
 
 .area-tag .remove-button:active {
   background-color: #fecaca;
+}
+
+.selection-status {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+}
+
+.counter {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #000000;
+}
+
+.warning-message {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 0.375rem;
+  color: #92400e;
+  font-size: 0.95rem;
+}
+
+.continue-button {
+  padding: 0.75rem 2rem;
+  background-color: #16a34a;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, opacity 0.2s;
+}
+
+.continue-button:hover:not(:disabled) {
+  background-color: #15803d;
+}
+
+.continue-button:active:not(:disabled) {
+  background-color: #14532d;
+}
+
+.continue-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .characteristics-grid {

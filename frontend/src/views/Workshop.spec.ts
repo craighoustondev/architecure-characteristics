@@ -196,5 +196,111 @@ describe('Workshop Page', () => {
       expect(cards[2]!.classes()).not.toContain('selected')
     })
   })
+
+  describe('Select 7 Characteristics Workflow', () => {
+    it('should display a counter showing number of selected characteristics', () => {
+      expect(wrapper.text()).toMatch(/Selected:.*0.*\/.*7/)
+    })
+
+    it('should update the counter when characteristics are selected', async () => {
+      const cards = wrapper.findAll('.characteristic-card')
+      
+      await cards[0]!.trigger('click')
+      expect(wrapper.text()).toMatch(/Selected:.*1.*\/.*7/)
+      
+      await cards[1]!.trigger('click')
+      expect(wrapper.text()).toMatch(/Selected:.*2.*\/.*7/)
+    })
+
+    it('should display instruction text about selecting 7 characteristics', () => {
+      expect(wrapper.text()).toContain('Select 7 characteristics')
+    })
+
+    it('should display a "Continue" button', () => {
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      expect(continueButton).toBeDefined()
+    })
+
+    it('should have "Continue" button disabled when less than 7 characteristics are selected', async () => {
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      
+      expect(continueButton!.attributes('disabled')).toBeDefined()
+      
+      // Select 6 characteristics (not enough)
+      const cards = wrapper.findAll('.characteristic-card')
+      for (let i = 0; i < 6; i++) {
+        await cards[i]!.trigger('click')
+      }
+      
+      expect(continueButton!.attributes('disabled')).toBeDefined()
+    })
+
+    it('should enable "Continue" button when exactly 7 characteristics are selected', async () => {
+      const cards = wrapper.findAll('.characteristic-card')
+      
+      // Select exactly 7 characteristics
+      for (let i = 0; i < 7; i++) {
+        await cards[i]!.trigger('click')
+      }
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      
+      expect(continueButton!.attributes('disabled')).toBeUndefined()
+    })
+
+    it('should prevent selecting more than 7 characteristics', async () => {
+      const cards = wrapper.findAll('.characteristic-card')
+      
+      // Select 7 characteristics
+      for (let i = 0; i < 7; i++) {
+        await cards[i]!.trigger('click')
+      }
+      
+      // Try to select an 8th
+      await cards[7]!.trigger('click')
+      
+      // 8th card should not be selected
+      expect(cards[7]!.classes()).not.toContain('selected')
+      
+      // Counter should still show 7
+      expect(wrapper.text()).toMatch(/Selected:.*7.*\/.*7/)
+    })
+
+    it('should show a message when trying to select more than 7', async () => {
+      const cards = wrapper.findAll('.characteristic-card')
+      
+      // Select 7 characteristics
+      for (let i = 0; i < 7; i++) {
+        await cards[i]!.trigger('click')
+      }
+      
+      // Try to select an 8th
+      await cards[7]!.trigger('click')
+      
+      expect(wrapper.text()).toMatch(/maximum.*7/i)
+    })
+
+    it('should allow deselecting a characteristic when at the limit', async () => {
+      const cards = wrapper.findAll('.characteristic-card')
+      
+      // Select 7 characteristics
+      for (let i = 0; i < 7; i++) {
+        await cards[i]!.trigger('click')
+      }
+      
+      // Deselect one
+      await cards[0]!.trigger('click')
+      expect(cards[0]!.classes()).not.toContain('selected')
+      expect(wrapper.text()).toMatch(/Selected:.*6.*\/.*7/)
+      
+      // Now should be able to select a different one
+      await cards[7]!.trigger('click')
+      expect(cards[7]!.classes()).toContain('selected')
+      expect(wrapper.text()).toMatch(/Selected:.*7.*\/.*7/)
+    })
+  })
 })
 
