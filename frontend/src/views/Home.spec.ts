@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { describe, it, expect, beforeEach } from 'vitest'
+import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
-import Home from './views/Home.vue'
+import Home from './Home.vue'
 
-describe('App - Landing Page', () => {
+describe('Home - Landing Page', () => {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
@@ -12,32 +12,25 @@ describe('App - Landing Page', () => {
     ]
   })
 
-  it('should display "Architecture characteristics" title', () => {
-    const wrapper = mount(Home, {
+  let wrapper: VueWrapper
+
+  beforeEach(() => {
+    wrapper = mount(Home, {
       global: {
         plugins: [router]
       }
     })
-    
+  })
+
+  it('should display "Architecture characteristics" title', () => {
     expect(wrapper.text()).toContain('Architecture characteristics')
   })
   
   it('should render the landing page', () => {
-    const wrapper = mount(Home, {
-      global: {
-        plugins: [router]
-      }
-    })
-    
     expect(wrapper.exists()).toBe(true)
   })
 
   it('should display the descriptive copy about architecture characteristics', () => {
-    const wrapper = mount(Home, {
-      global: {
-        plugins: [router]
-      }
-    })
     const text = wrapper.text()
     
     expect(text).toContain(
@@ -52,24 +45,12 @@ describe('App - Landing Page', () => {
   })
 
   it('should display a "Start new workshop" button', () => {
-    const wrapper = mount(Home, {
-      global: {
-        plugins: [router]
-      }
-    })
-    
     const button = wrapper.find('button')
     expect(button.exists()).toBe(true)
     expect(button.text()).toBe('Start new workshop')
   })
 
   it('should navigate to workshop page when button is clicked', async () => {
-    const wrapper = mount(Home, {
-      global: {
-        plugins: [router]
-      }
-    })
-    
     await router.isReady()
     await router.push('/')
     
