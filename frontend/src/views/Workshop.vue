@@ -113,9 +113,15 @@ const removeSystemArea = (index: number) => {
   systemAreas.value.splice(index, 1)
 }
 
+// Phase tracking: 'initial' (select 7) or 'narrowDown' (narrow to 3)
+const phase = ref<'initial' | 'narrowDown'>('initial')
+
 // Characteristics selection state
 const selectedCharacteristics = ref<Set<string>>(new Set())
+const candidateCharacteristics = ref<string[]>([]) // The 7 selected in phase 1
+const finalSelections = ref<Set<string>>(new Set()) // The final 3 (or more) in phase 2
 const MAX_SELECTIONS = 7
+const SUGGESTED_FINAL = 3
 const showLimitWarning = ref(false)
 
 const canSelectCharacteristics = () => {
@@ -143,8 +149,22 @@ const toggleSelection = (name: string) => {
   selectedCharacteristics.value = new Set(selectedCharacteristics.value)
 }
 
+const toggleFinalSelection = (name: string) => {
+  if (finalSelections.value.has(name)) {
+    finalSelections.value.delete(name)
+  } else {
+    finalSelections.value.add(name)
+  }
+  // Trigger reactivity
+  finalSelections.value = new Set(finalSelections.value)
+}
+
 const isSelected = (name: string) => {
   return selectedCharacteristics.value.has(name)
+}
+
+const isFinallySelected = (name: string) => {
+  return finalSelections.value.has(name)
 }
 
 const canContinue = () => {
@@ -153,9 +173,27 @@ const canContinue = () => {
 
 const continueToNextStep = () => {
   if (canContinue()) {
-    // TODO: Navigate to next step
-    console.log('Selected characteristics:', Array.from(selectedCharacteristics.value))
+    // Store the 7 selected characteristics as candidates
+    candidateCharacteristics.value = Array.from(selectedCharacteristics.value)
+    // Clear final selections for fresh start in phase 2
+    finalSelections.value.clear()
+    // Transition to narrow down phase
+    phase.value = 'narrowDown'
   }
+}
+
+// Get characteristics that were not in the top 7
+const getOtherCharacteristics = () => {
+  return characteristics.filter(
+    char => !candidateCharacteristics.value.includes(char.name)
+  )
+}
+
+// Get the selected candidate characteristics as objects
+const getCandidateCharacteristicsObjects = () => {
+  return characteristics.filter(
+    char => candidateCharacteristics.value.includes(char.name)
+  )
 }
 
 // Watch for when all system areas are removed and clear selections
@@ -209,8 +247,8 @@ watch(
       </div>
     </section>
 
-    <!-- Characteristics Section -->
-    <section class="characteristics-section">
+    <!-- Initial Phase: Select 7 Characteristics -->
+    <section v-if="phase === 'initial'" class="characteristics-section">
       <h2>Architecture Characteristics</h2>
       <p>Select 7 characteristics that are most relevant to your system areas.</p>
       
@@ -246,6 +284,50 @@ watch(
           :class="{ disabled: !canSelectCharacteristics() }"
           @click="toggleSelection(characteristic.name)"
         />
+      </div>
+    </section>
+
+    <!-- Narrow Down Phase: Select Final 3 -->
+    <section v-if="phase === 'narrowDown'" class="narrow-down-section">
+      <h2>Narrow Down to Top 3</h2>
+      <p>Review your 7 selected characteristics and narrow them down to the 3 most important ones for your system areas. This is a suggested limit - you can select more if needed.</p>
+      
+      <div class="selection-status">
+        <div class="counter">
+          Selected: {{ finalSelections.size }} / {{ SUGGESTED_FINAL }}
+        </div>
+      </div>
+
+      <!-- Selected 7 Characteristics (Prominent) -->
+      <div class="selected-characteristics-section">
+        <h3>Your Selected Characteristics</h3>
+        <div class="characteristics-grid">
+          <CharacteristicCard
+            v-for="characteristic in getCandidateCharacteristicsObjects()" 
+            :key="characteristic.name"
+            :name="characteristic.name"
+            :description="characteristic.description"
+            :is-selected="isFinallySelected(characteristic.name)"
+            @click="toggleFinalSelection(characteristic.name)"
+          />
+        </div>
+      </div>
+
+      <!-- Other 15 Characteristics (Less Prominent) -->
+      <div class="other-characteristics-section secondary">
+        <h3>Other Characteristics</h3>
+        <p class="secondary-text">For reference - these were not in your top 7</p>
+        <div class="characteristics-grid">
+          <CharacteristicCard
+            v-for="characteristic in getOtherCharacteristics()" 
+            :key="characteristic.name"
+            :name="characteristic.name"
+            :description="characteristic.description"
+            :is-selected="false"
+            :class="{ disabled: true }"
+            @click="() => {}"
+          />
+        </div>
       </div>
     </section>
   </div>
@@ -440,6 +522,59 @@ section {
 .characteristics-grid :deep(.characteristic-card.disabled) {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Narrow Down Phase Styles */
+.narrow-down-section {
+  margin-top: 2rem;
+}
+
+.narrow-down-section h2 {
+  color: #000000;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.narrow-down-section > p {
+  color: #4b5563;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.selected-characteristics-section {
+  margin-bottom: 3rem;
+}
+
+.selected-characteristics-section h3 {
+  color: #000000;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.other-characteristics-section {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e5e7eb;
+}
+
+.other-characteristics-section.secondary {
+  opacity: 0.7;
+}
+
+.other-characteristics-section h3 {
+  color: #6b7280;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.secondary-text {
+  color: #6b7280;
+  font-size: 0.95rem;
+  font-style: italic;
+  margin-bottom: 1rem;
 }
 </style>
 

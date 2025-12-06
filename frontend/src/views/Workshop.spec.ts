@@ -427,5 +427,150 @@ describe('Workshop Page', () => {
       expect(wrapper.text()).toMatch(/Selected:.*7.*\/.*7/)
     })
   })
+
+  describe('Narrow Down to 3 Phase', () => {
+    // Helper to add a system area and select 7 characteristics
+    const setupSevenSelected = async () => {
+      const input = wrapper.find('input[type="text"]')
+      const addButton = wrapper.find('button')
+      await input.setValue('Test System Area')
+      await addButton.trigger('click')
+      
+      const cards = wrapper.findAll('.characteristic-card')
+      for (let i = 0; i < 7; i++) {
+        await cards[i]!.trigger('click')
+      }
+    }
+
+    it('should transition to narrow down phase when Continue is clicked with 7 selected', async () => {
+      await setupSevenSelected()
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      
+      await continueButton!.trigger('click')
+      
+      // Should show instruction for narrowing down to 3
+      expect(wrapper.text()).toMatch(/narrow.*down.*3/i)
+    })
+
+    it('should display the 7 selected characteristics prominently in narrow down phase', async () => {
+      await setupSevenSelected()
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      await continueButton!.trigger('click')
+      
+      // The 7 selected characteristics should be in a prominent section
+      const selectedSection = wrapper.find('.selected-characteristics-section')
+      expect(selectedSection.exists()).toBe(true)
+      
+      const selectedCards = selectedSection.findAll('.characteristic-card')
+      expect(selectedCards).toHaveLength(7)
+    })
+
+    it('should still display the other 15 characteristics in narrow down phase', async () => {
+      await setupSevenSelected()
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      await continueButton!.trigger('click')
+      
+      // The other 15 characteristics should still be visible
+      const otherSection = wrapper.find('.other-characteristics-section')
+      expect(otherSection.exists()).toBe(true)
+      
+      const otherCards = otherSection.findAll('.characteristic-card')
+      expect(otherCards).toHaveLength(15)
+    })
+
+    it('should show a counter for selecting final 3 characteristics', async () => {
+      await setupSevenSelected()
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      await continueButton!.trigger('click')
+      
+      // Should show a counter starting at 0 / 3
+      expect(wrapper.text()).toMatch(/Selected:.*0.*\/.*3/i)
+    })
+
+    it('should allow selecting characteristics from the 7 selected ones', async () => {
+      await setupSevenSelected()
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      await continueButton!.trigger('click')
+      
+      const selectedSection = wrapper.find('.selected-characteristics-section')
+      const cards = selectedSection.findAll('.characteristic-card')
+      
+      // Select first characteristic for final selection
+      await cards[0]!.trigger('click')
+      
+      expect(cards[0]!.classes()).toContain('selected')
+      expect(wrapper.text()).toMatch(/Selected:.*1.*\/.*3/i)
+    })
+
+    it('should allow deselecting characteristics in narrow down phase', async () => {
+      await setupSevenSelected()
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      await continueButton!.trigger('click')
+      
+      const selectedSection = wrapper.find('.selected-characteristics-section')
+      const cards = selectedSection.findAll('.characteristic-card')
+      
+      // Select and then deselect
+      await cards[0]!.trigger('click')
+      expect(cards[0]!.classes()).toContain('selected')
+      
+      await cards[0]!.trigger('click')
+      expect(cards[0]!.classes()).not.toContain('selected')
+      expect(wrapper.text()).toMatch(/Selected:.*0.*\/.*3/i)
+    })
+
+    it('should not enforce a hard limit of 3 selections', async () => {
+      await setupSevenSelected()
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      await continueButton!.trigger('click')
+      
+      const selectedSection = wrapper.find('.selected-characteristics-section')
+      const cards = selectedSection.findAll('.characteristic-card')
+      
+      // Select 4 characteristics (more than the suggested 3)
+      for (let i = 0; i < 4; i++) {
+        await cards[i]!.trigger('click')
+      }
+      
+      // All 4 should be selected (no hard limit)
+      expect(cards[0]!.classes()).toContain('selected')
+      expect(cards[1]!.classes()).toContain('selected')
+      expect(cards[2]!.classes()).toContain('selected')
+      expect(cards[3]!.classes()).toContain('selected')
+      expect(wrapper.text()).toMatch(/Selected:.*4.*\/.*3/i)
+    })
+
+    it('should show a visual distinction between selected 7 and other 15', async () => {
+      await setupSevenSelected()
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue'))
+      await continueButton!.trigger('click')
+      
+      const selectedSection = wrapper.find('.selected-characteristics-section')
+      const otherSection = wrapper.find('.other-characteristics-section')
+      
+      // Sections should exist and be visually distinct
+      expect(selectedSection.exists()).toBe(true)
+      expect(otherSection.exists()).toBe(true)
+      
+      // Other section should have a less prominent styling
+      expect(otherSection.classes()).toContain('secondary')
+    })
+  })
 })
 
