@@ -14,5 +14,20 @@ describe('App - Landing Page', () => {
     
     expect(wrapper.exists()).toBe(true)
   })
+
+  it('should display the descriptive copy about architecture characteristics', () => {
+    const wrapper = mount(App)
+    const text = wrapper.text()
+    
+    expect(text).toContain(
+      'Architecture characteristics describe the capabilities of a software system that are not directly related to domain functionality.'
+    )
+    expect(text).toContain(
+      'They are often suffixed with -ility E.g. scalability, extensibility, adaptability.'
+    )
+    expect(text).toContain(
+      'The appropriateness of each characteristic is context specific and involves trade-offs analysis to understand which ones should be accommodated.'
+    )
+  })
 })
 
