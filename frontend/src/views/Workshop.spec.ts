@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, type DOMWrapper } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import Workshop from './Workshop.vue'
 
@@ -11,7 +11,7 @@ describe('Workshop Page', () => {
     ]
   })
 
-  it('should display 3 architecture characteristic cards', () => {
+  it('should display all 22 architecture characteristic cards', () => {
     const wrapper = mount(Workshop, {
       global: {
         plugins: [router]
@@ -19,45 +19,38 @@ describe('Workshop Page', () => {
     })
     
     const cards = wrapper.findAll('.characteristic-card')
-    expect(cards).toHaveLength(3)
+    expect(cards).toHaveLength(22)
   })
 
-  it('should display Scalability characteristic with its description', () => {
+  it('should display characteristic cards with name and description', () => {
     const wrapper = mount(Workshop, {
       global: {
         plugins: [router]
       }
     })
     
+    const cards = wrapper.findAll('.characteristic-card')
+    
+    // Verify each card has both h3 (name) and p (description)
+    cards.forEach((card: DOMWrapper<Element>) => {
+      expect(card.find('h3').exists()).toBe(true)
+      expect(card.find('p').exists()).toBe(true)
+      expect(card.find('h3').text()).not.toBe('')
+      expect(card.find('p').text()).not.toBe('')
+    })
+  })
+
+  it('should display a sample characteristic correctly', () => {
+    const wrapper = mount(Workshop, {
+      global: {
+        plugins: [router]
+      }
+    })
+    
+    // Test one representative example to verify structure
     expect(wrapper.text()).toContain('Scalability')
     expect(wrapper.text()).toContain(
-      'A function of system capacity and growth over time; as the number of users or requests increase in the system, responsiveness, performance and error rates remain consistent'
-    )
-  })
-
-  it('should display Elasticity characteristic with its description', () => {
-    const wrapper = mount(Workshop, {
-      global: {
-        plugins: [router]
-      }
-    })
-    
-    expect(wrapper.text()).toContain('Elasticity')
-    expect(wrapper.text()).toContain(
-      'The system is able to expend and respond quickly to unexpected or anticipated extreme loads (e.g. going from 20 to 250,000 users instantly)'
-    )
-  })
-
-  it('should display Adaptability characteristic with its description', () => {
-    const wrapper = mount(Workshop, {
-      global: {
-        plugins: [router]
-      }
-    })
-    
-    expect(wrapper.text()).toContain('Adaptability')
-    expect(wrapper.text()).toContain(
-      'The ease in which a system can adapt to changes in environment and functionality'
+      'A function of system capacity and growth over time'
     )
   })
 
@@ -80,7 +73,7 @@ describe('Workshop Page', () => {
     })
     
     const cards = wrapper.findAll('.characteristic-card')
-    const firstCard = cards[0]
+    const firstCard = cards[0]!
     
     await firstCard.trigger('click')
     
@@ -95,7 +88,7 @@ describe('Workshop Page', () => {
     })
     
     const cards = wrapper.findAll('.characteristic-card')
-    const firstCard = cards[0]
+    const firstCard = cards[0]!
     
     // Select the card
     await firstCard.trigger('click')
@@ -116,12 +109,12 @@ describe('Workshop Page', () => {
     const cards = wrapper.findAll('.characteristic-card')
     
     // Select first and second cards
-    await cards[0].trigger('click')
-    await cards[1].trigger('click')
+    await cards[0]!.trigger('click')
+    await cards[1]!.trigger('click')
     
-    expect(cards[0].classes()).toContain('selected')
-    expect(cards[1].classes()).toContain('selected')
-    expect(cards[2].classes()).not.toContain('selected')
+    expect(cards[0]!.classes()).toContain('selected')
+    expect(cards[1]!.classes()).toContain('selected')
+    expect(cards[2]!.classes()).not.toContain('selected')
   })
 })
 
