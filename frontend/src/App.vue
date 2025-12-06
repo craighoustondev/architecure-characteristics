@@ -18,6 +18,8 @@
         The appropriateness of each characteristic is context specific and involves trade-offs analysis to understand which ones should be accommodated.
       </p>
     </div>
+
+    <button class="start-button">Start new workshop</button>
   </div>
 </template>
 
@@ -50,5 +52,26 @@ h1 {
   margin: 1.5rem 0;
   color: #16a34a;
   font-size: 1.125rem;
+}
+
+.start-button {
+  margin-top: 2rem;
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: white;
+  background-color: #16a34a;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.start-button:hover {
+  background-color: #15803d;
+}
+
+.start-button:active {
+  background-color: #14532d;
 }
 </style>

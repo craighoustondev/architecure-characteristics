@@ -29,5 +29,13 @@ describe('App - Landing Page', () => {
       'The appropriateness of each characteristic is context specific and involves trade-offs analysis to understand which ones should be accommodated.'
     )
   })
+
+  it('should display a "Start new workshop" button', () => {
+    const wrapper = mount(App)
+    
+    const button = wrapper.find('button')
+    expect(button.exists()).toBe(true)
+    expect(button.text()).toBe('Start new workshop')
+  })
 })
 
