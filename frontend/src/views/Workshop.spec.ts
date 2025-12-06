@@ -60,5 +60,68 @@ describe('Workshop Page', () => {
       'The ease in which a system can adapt to changes in environment and functionality'
     )
   })
+
+  it('should not have any cards selected initially', () => {
+    const wrapper = mount(Workshop, {
+      global: {
+        plugins: [router]
+      }
+    })
+    
+    const selectedCards = wrapper.findAll('.characteristic-card.selected')
+    expect(selectedCards).toHaveLength(0)
+  })
+
+  it('should select a card when clicked', async () => {
+    const wrapper = mount(Workshop, {
+      global: {
+        plugins: [router]
+      }
+    })
+    
+    const cards = wrapper.findAll('.characteristic-card')
+    const firstCard = cards[0]
+    
+    await firstCard.trigger('click')
+    
+    expect(firstCard.classes()).toContain('selected')
+  })
+
+  it('should deselect a card when clicked again', async () => {
+    const wrapper = mount(Workshop, {
+      global: {
+        plugins: [router]
+      }
+    })
+    
+    const cards = wrapper.findAll('.characteristic-card')
+    const firstCard = cards[0]
+    
+    // Select the card
+    await firstCard.trigger('click')
+    expect(firstCard.classes()).toContain('selected')
+    
+    // Deselect the card
+    await firstCard.trigger('click')
+    expect(firstCard.classes()).not.toContain('selected')
+  })
+
+  it('should allow multiple cards to be selected', async () => {
+    const wrapper = mount(Workshop, {
+      global: {
+        plugins: [router]
+      }
+    })
+    
+    const cards = wrapper.findAll('.characteristic-card')
+    
+    // Select first and second cards
+    await cards[0].trigger('click')
+    await cards[1].trigger('click')
+    
+    expect(cards[0].classes()).toContain('selected')
+    expect(cards[1].classes()).toContain('selected')
+    expect(cards[2].classes()).not.toContain('selected')
+  })
 })
 
