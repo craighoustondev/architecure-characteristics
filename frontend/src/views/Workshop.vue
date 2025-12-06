@@ -98,6 +98,22 @@ const characteristics: Characteristic[] = [
   }
 ]
 
+// System areas state
+const systemAreas = ref<string[]>([])
+const newArea = ref('')
+
+const addSystemArea = () => {
+  if (newArea.value.trim()) {
+    systemAreas.value.push(newArea.value.trim())
+    newArea.value = ''
+  }
+}
+
+const removeSystemArea = (index: number) => {
+  systemAreas.value.splice(index, 1)
+}
+
+// Characteristics selection state
 const selectedCharacteristics = ref<Set<string>>(new Set())
 
 const toggleSelection = (name: string) => {
@@ -118,18 +134,56 @@ const isSelected = (name: string) => {
 <template>
   <div class="workshop-page">
     <h1>Workshop</h1>
-    <p>Select architecture characteristics...</p>
     
-    <div class="characteristics-grid">
-      <CharacteristicCard
-        v-for="characteristic in characteristics" 
-        :key="characteristic.name"
-        :name="characteristic.name"
-        :description="characteristic.description"
-        :is-selected="isSelected(characteristic.name)"
-        @click="toggleSelection(characteristic.name)"
-      />
-    </div>
+    <!-- System Areas Section -->
+    <section class="system-areas-section">
+      <h2>System Areas</h2>
+      <p>Define the areas of your system that this workshop will focus on.</p>
+      
+      <div class="area-input-group">
+        <input 
+          v-model="newArea"
+          type="text" 
+          placeholder="Enter a system area (e.g., Payment Processing)"
+          @keyup.enter="addSystemArea"
+        />
+        <button @click="addSystemArea">Add Area</button>
+      </div>
+      
+      <div v-if="systemAreas.length > 0" class="areas-list">
+        <div 
+          v-for="(area, index) in systemAreas" 
+          :key="index"
+          class="area-tag"
+        >
+          <span>{{ area }}</span>
+          <button 
+            class="remove-button"
+            @click="removeSystemArea(index)"
+            aria-label="Remove area"
+          >
+            ×
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Characteristics Section -->
+    <section class="characteristics-section">
+      <h2>Architecture Characteristics</h2>
+      <p>Select the characteristics that are relevant to your system areas.</p>
+      
+      <div class="characteristics-grid">
+        <CharacteristicCard
+          v-for="characteristic in characteristics" 
+          :key="characteristic.name"
+          :name="characteristic.name"
+          :description="characteristic.description"
+          :is-selected="isSelected(characteristic.name)"
+          @click="toggleSelection(characteristic.name)"
+        />
+      </div>
+    </section>
   </div>
 </template>
 
@@ -142,7 +196,107 @@ const isSelected = (name: string) => {
 
 h1 {
   color: #000000;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+
+h2 {
+  color: #000000;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+section {
+  margin-bottom: 3rem;
+}
+
+.system-areas-section p,
+.characteristics-section p {
+  color: #4b5563;
+  margin-bottom: 1.5rem;
+}
+
+.area-input-group {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.area-input-group input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.area-input-group input:focus {
+  outline: none;
+  border-color: #16a34a;
+}
+
+.area-input-group button {
+  padding: 0.75rem 1.5rem;
+  background-color: #16a34a;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.area-input-group button:hover {
+  background-color: #15803d;
+}
+
+.area-input-group button:active {
+  background-color: #14532d;
+}
+
+.areas-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.area-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #dcfce7;
+  border: 2px solid #16a34a;
+  border-radius: 0.5rem;
+  color: #000000;
+  font-weight: 500;
+}
+
+.area-tag .remove-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  background-color: transparent;
+  color: #dc2626;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.area-tag .remove-button:hover {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.area-tag .remove-button:active {
+  background-color: #fecaca;
 }
 
 .characteristics-grid {
