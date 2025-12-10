@@ -113,6 +113,21 @@ const removeSystemArea = (index: number) => {
   systemAreas.value.splice(index, 1)
 }
 
+// Strategic goals state
+const strategicGoals = ref<string[]>([])
+const newGoal = ref('')
+
+const addStrategicGoal = () => {
+  if (newGoal.value.trim()) {
+    strategicGoals.value.push(newGoal.value.trim())
+    newGoal.value = ''
+  }
+}
+
+const removeStrategicGoal = (index: number) => {
+  strategicGoals.value.splice(index, 1)
+}
+
 // Phase tracking: 'initial' (select 7) or 'narrowDown' (narrow to 3)
 const phase = ref<'initial' | 'narrowDown'>('initial')
 
@@ -125,7 +140,7 @@ const SUGGESTED_FINAL = 3
 const showLimitWarning = ref(false)
 
 const canSelectCharacteristics = () => {
-  return systemAreas.value.length > 0
+  return systemAreas.value.length > 0 && strategicGoals.value.length > 0
 }
 
 const toggleSelection = (name: string) => {
@@ -217,6 +232,19 @@ watch(
     }
   }
 )
+
+// Watch for when all strategic goals are removed and clear selections
+watch(
+  () => strategicGoals.value.length,
+  (newLength) => {
+    if (newLength === 0) {
+      // Clear all selected characteristics when no strategic goals exist
+      selectedCharacteristics.value.clear()
+      selectedCharacteristics.value = new Set()
+      showLimitWarning.value = false
+    }
+  }
+)
 </script>
 
 <template>
@@ -232,7 +260,7 @@ watch(
         <input 
           v-model="newArea"
           type="text" 
-          placeholder="Enter a system area (e.g., Payment Processing)"
+          placeholder="Enter a system area"
           @keyup.enter="addSystemArea"
         />
         <button @click="addSystemArea">Add Area</button>
@@ -256,13 +284,54 @@ watch(
       </div>
     </section>
 
+    <!-- Strategic Goals Section -->
+    <section class="strategic-goals-section">
+      <h2>Strategic Goals</h2>
+      <p>Define the strategic business or product goals associated with your system areas.</p>
+      
+      <div class="goal-input-group">
+        <input 
+          v-model="newGoal"
+          type="text" 
+          placeholder="Enter a strategic goal"
+          @keyup.enter="addStrategicGoal"
+        />
+        <button @click="addStrategicGoal">Add Goal</button>
+      </div>
+      
+      <div v-if="strategicGoals.length > 0" class="goals-list">
+        <div 
+          v-for="(goal, index) in strategicGoals" 
+          :key="index"
+          class="goal-tag"
+        >
+          <span>{{ goal }}</span>
+          <button 
+            class="remove-button"
+            @click="removeStrategicGoal(index)"
+            aria-label="Remove goal"
+          >
+            ×
+          </button>
+        </div>
+      </div>
+    </section>
+
     <!-- Initial Phase: Select 7 Characteristics -->
     <section v-if="phase === 'initial'" class="characteristics-section">
       <h2>Architecture Characteristics</h2>
       <p>Select 7 characteristics that are most relevant to your system areas.</p>
       
       <div v-if="!canSelectCharacteristics()" class="info-message">
-        You must add at least one system area before selecting characteristics.
+        <span v-if="systemAreas.length === 0 && strategicGoals.length === 0">
+          You must add at least one system area and one strategic goal before selecting characteristics.
+        </span>
+        <span v-else-if="systemAreas.length === 0">
+          You must add at least one system area before selecting characteristics.
+        </span>
+        <span v-else-if="strategicGoals.length === 0">
+          You must add at least one strategic goal before selecting characteristics.
+        </span>
       </div>
       
       <div class="selection-status">
@@ -372,18 +441,21 @@ section {
 }
 
 .system-areas-section p,
+.strategic-goals-section p,
 .characteristics-section p {
   color: #4b5563;
   margin-bottom: 1.5rem;
 }
 
-.area-input-group {
+.area-input-group,
+.goal-input-group {
   display: flex;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
 }
 
-.area-input-group input {
+.area-input-group input,
+.goal-input-group input {
   flex: 1;
   padding: 0.75rem;
   border: 2px solid #e5e7eb;
@@ -392,12 +464,14 @@ section {
   transition: border-color 0.2s;
 }
 
-.area-input-group input:focus {
+.area-input-group input:focus,
+.goal-input-group input:focus {
   outline: none;
   border-color: #16a34a;
 }
 
-.area-input-group button {
+.area-input-group button,
+.goal-input-group button {
   padding: 0.75rem 1.5rem;
   background-color: #16a34a;
   color: white;
@@ -409,21 +483,25 @@ section {
   transition: background-color 0.2s;
 }
 
-.area-input-group button:hover {
+.area-input-group button:hover,
+.goal-input-group button:hover {
   background-color: #15803d;
 }
 
-.area-input-group button:active {
+.area-input-group button:active,
+.goal-input-group button:active {
   background-color: #14532d;
 }
 
-.areas-list {
+.areas-list,
+.goals-list {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
 }
 
-.area-tag {
+.area-tag,
+.goal-tag {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -435,7 +513,8 @@ section {
   font-weight: 500;
 }
 
-.area-tag .remove-button {
+.area-tag .remove-button,
+.goal-tag .remove-button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -452,7 +531,8 @@ section {
   transition: background-color 0.2s, color 0.2s;
 }
 
-.area-tag .remove-button:hover {
+.area-tag .remove-button:hover,
+.goal-tag .remove-button:hover {
   background-color: #fee2e2;
   color: #991b1b;
 }

@@ -131,6 +131,107 @@ describe('Workshop Page', () => {
     })
   })
 
+  describe('Strategic Goals', () => {
+    it('should display an input field for adding strategic business/product goals', () => {
+      const inputs = wrapper.findAll('input[type="text"]')
+      // Should have at least 2 inputs: one for system areas, one for goals
+      expect(inputs.length).toBeGreaterThanOrEqual(2)
+      
+      // Find the goals input by its placeholder
+      const goalsInput = wrapper.find('input[placeholder="Enter a strategic goal"]')
+      expect(goalsInput.exists()).toBe(true)
+    })
+
+    it('should display an "Add Goal" button', () => {
+      const buttons = wrapper.findAll('button')
+      const addGoalButton = buttons.find(btn => btn.text() === 'Add Goal')
+      expect(addGoalButton).toBeDefined()
+      expect(addGoalButton!.exists()).toBe(true)
+    })
+
+    it('should add a goal when the Add Goal button is clicked', async () => {
+      const goalsInput = wrapper.find('input[placeholder="Enter a strategic goal"]')
+      const buttons = wrapper.findAll('button')
+      const addGoalButton = buttons.find(btn => btn.text() === 'Add Goal')
+      
+      await goalsInput.setValue('Increase customer retention by 20%')
+      await addGoalButton!.trigger('click')
+      
+      expect(wrapper.text()).toContain('Increase customer retention by 20%')
+    })
+
+    it('should display multiple goals when added', async () => {
+      const goalsInput = wrapper.find('input[placeholder="Enter a strategic goal"]')
+      const buttons = wrapper.findAll('button')
+      const addGoalButton = buttons.find(btn => btn.text() === 'Add Goal')
+      
+      await goalsInput.setValue('Increase customer retention by 20%')
+      await addGoalButton!.trigger('click')
+      
+      await goalsInput.setValue('Reduce operational costs')
+      await addGoalButton!.trigger('click')
+      
+      expect(wrapper.text()).toContain('Increase customer retention by 20%')
+      expect(wrapper.text()).toContain('Reduce operational costs')
+    })
+
+    it('should clear the input field after adding a goal', async () => {
+      const goalsInput = wrapper.find('input[placeholder="Enter a strategic goal"]')
+      const buttons = wrapper.findAll('button')
+      const addGoalButton = buttons.find(btn => btn.text() === 'Add Goal')
+      
+      await goalsInput.setValue('Launch new product line')
+      await addGoalButton!.trigger('click')
+      
+      expect((goalsInput.element as HTMLInputElement).value).toBe('')
+    })
+
+    it('should remove a goal when its remove button is clicked', async () => {
+      const goalsInput = wrapper.find('input[placeholder="Enter a strategic goal"]')
+      const buttons = wrapper.findAll('button')
+      const addGoalButton = buttons.find(btn => btn.text() === 'Add Goal')
+      
+      await goalsInput.setValue('Improve market share')
+      await addGoalButton!.trigger('click')
+      
+      expect(wrapper.text()).toContain('Improve market share')
+      
+      const goalTags = wrapper.findAll('.goal-tag')
+      const removeButton = goalTags[0]!.find('button')
+      await removeButton.trigger('click')
+      
+      expect(wrapper.text()).not.toContain('Improve market share')
+    })
+
+    it('should remove only the specific goal when multiple goals exist', async () => {
+      const goalsInput = wrapper.find('input[placeholder="Enter a strategic goal"]')
+      const buttons = wrapper.findAll('button')
+      const addGoalButton = buttons.find(btn => btn.text() === 'Add Goal')
+      
+      await goalsInput.setValue('Goal A')
+      await addGoalButton!.trigger('click')
+      
+      await goalsInput.setValue('Goal B')
+      await addGoalButton!.trigger('click')
+      
+      await goalsInput.setValue('Goal C')
+      await addGoalButton!.trigger('click')
+      
+      expect(wrapper.text()).toContain('Goal A')
+      expect(wrapper.text()).toContain('Goal B')
+      expect(wrapper.text()).toContain('Goal C')
+      
+      // Remove the middle one (Goal B)
+      const goalTags = wrapper.findAll('.goal-tag')
+      const removeButton = goalTags[1]!.find('button')
+      await removeButton.trigger('click')
+      
+      expect(wrapper.text()).toContain('Goal A')
+      expect(wrapper.text()).not.toContain('Goal B')
+      expect(wrapper.text()).toContain('Goal C')
+    })
+  })
+
   describe('Architecture Characteristics', () => {
     it('should display all 22 architecture characteristic cards', () => {
       const cards = wrapper.findAll('.characteristic-card')
@@ -173,26 +274,76 @@ describe('Workshop Page', () => {
       expect(firstCard.classes()).not.toContain('selected')
     })
 
-    it('should show a message when no system areas are defined', () => {
-      expect(wrapper.text()).toMatch(/add.*system area.*before selecting/i)
+    it('should not allow selecting characteristics when system area exists but no goals are defined', async () => {
+      const areaInput = wrapper.find('input[placeholder="Enter a system area"]')
+      const buttons = wrapper.findAll('button')
+      const addAreaButton = buttons.find(btn => btn.text() === 'Add Area')
+      
+      // Add a system area
+      await areaInput.setValue('Payment Processing')
+      await addAreaButton!.trigger('click')
+      
+      // Try to select a characteristic without adding a goal
+      const cards = wrapper.findAll('.characteristic-card')
+      const firstCard = cards[0]!
+      await firstCard.trigger('click')
+      
+      // Card should not be selected
+      expect(firstCard.classes()).not.toContain('selected')
     })
 
-    it('should have disabled appearance on characteristics when no system areas exist', () => {
+    it('should show a message when no system areas or goals are defined', () => {
+      expect(wrapper.text()).toMatch(/add.*system area.*strategic goal.*before selecting/i)
+    })
+
+    it('should show a message when system area exists but no goals are defined', async () => {
+      const areaInput = wrapper.find('input[placeholder="Enter a system area"]')
+      const buttons = wrapper.findAll('button')
+      const addAreaButton = buttons.find(btn => btn.text() === 'Add Area')
+      
+      // Add a system area
+      await areaInput.setValue('Payment Processing')
+      await addAreaButton!.trigger('click')
+      
+      expect(wrapper.text()).toMatch(/add.*strategic goal.*before selecting/i)
+    })
+
+    it('should have disabled appearance on characteristics when prerequisites are not met', async () => {
       const cards = wrapper.findAll('.characteristic-card')
       
-      // Cards should have a disabled class or attribute
+      // Cards should have a disabled class initially (no system area, no goal)
       cards.forEach((card: DOMWrapper<Element>) => {
+        expect(card.classes()).toContain('disabled')
+      })
+      
+      // Add system area but no goal - should still be disabled
+      const areaInput = wrapper.find('input[placeholder="Enter a system area"]')
+      const buttons = wrapper.findAll('button')
+      const addAreaButton = buttons.find(btn => btn.text() === 'Add Area')
+      
+      await areaInput.setValue('Payment Processing')
+      await addAreaButton!.trigger('click')
+      
+      const cardsAfterArea = wrapper.findAll('.characteristic-card')
+      cardsAfterArea.forEach((card: DOMWrapper<Element>) => {
         expect(card.classes()).toContain('disabled')
       })
     })
 
-    it('should allow selecting characteristics after adding a system area', async () => {
-      const input = wrapper.find('input[type="text"]')
-      const addButton = wrapper.find('button')
+    it('should allow selecting characteristics after adding both system area and goal', async () => {
+      const areaInput = wrapper.find('input[placeholder="Enter a system area"]')
+      const goalInput = wrapper.find('input[placeholder="Enter a strategic goal"]')
+      const buttons = wrapper.findAll('button')
+      const addAreaButton = buttons.find(btn => btn.text() === 'Add Area')
+      const addGoalButton = buttons.find(btn => btn.text() === 'Add Goal')
       
       // Add a system area
-      await input.setValue('Payment Processing')
-      await addButton.trigger('click')
+      await areaInput.setValue('Payment Processing')
+      await addAreaButton!.trigger('click')
+      
+      // Add a goal
+      await goalInput.setValue('Increase customer retention by 20%')
+      await addGoalButton!.trigger('click')
       
       // Now try to select a characteristic
       const cards = wrapper.findAll('.characteristic-card')
@@ -203,13 +354,51 @@ describe('Workshop Page', () => {
       expect(firstCard.classes()).toContain('selected')
     })
 
-    it('should clear all selected characteristics when all system areas are removed', async () => {
-      const input = wrapper.find('input[type="text"]')
-      const addButton = wrapper.find('button')
+    it('should clear all selected characteristics when all goals are removed', async () => {
+      const areaInput = wrapper.find('input[placeholder="Enter a system area"]')
+      const goalInput = wrapper.find('input[placeholder="Enter a strategic goal"]')
+      const buttons = wrapper.findAll('button')
+      const addAreaButton = buttons.find(btn => btn.text() === 'Add Area')
+      const addGoalButton = buttons.find(btn => btn.text() === 'Add Goal')
       
-      // Add a system area
-      await input.setValue('Payment Processing')
-      await addButton.trigger('click')
+      // Add a system area and goal
+      await areaInput.setValue('Payment Processing')
+      await addAreaButton!.trigger('click')
+      
+      await goalInput.setValue('Increase customer retention')
+      await addGoalButton!.trigger('click')
+      
+      // Select a characteristic
+      const cards = wrapper.findAll('.characteristic-card')
+      await cards[0]!.trigger('click')
+      await cards[1]!.trigger('click')
+      
+      expect(cards[0]!.classes()).toContain('selected')
+      expect(cards[1]!.classes()).toContain('selected')
+      
+      // Remove the goal
+      const goalTags = wrapper.findAll('.goal-tag')
+      const removeButton = goalTags[0]!.find('button')
+      await removeButton.trigger('click')
+      
+      // Characteristics should be cleared
+      expect(cards[0]!.classes()).not.toContain('selected')
+      expect(cards[1]!.classes()).not.toContain('selected')
+    })
+
+    it('should clear all selected characteristics when all system areas are removed', async () => {
+      const areaInput = wrapper.find('input[placeholder="Enter a system area"]')
+      const goalInput = wrapper.find('input[placeholder="Enter a strategic goal"]')
+      const buttons = wrapper.findAll('button')
+      const addAreaButton = buttons.find(btn => btn.text() === 'Add Area')
+      const addGoalButton = buttons.find(btn => btn.text() === 'Add Goal')
+      
+      // Add a system area and goal
+      await areaInput.setValue('Payment Processing')
+      await addAreaButton!.trigger('click')
+      
+      await goalInput.setValue('Increase revenue')
+      await addGoalButton!.trigger('click')
       
       // Select some characteristics
       const cards = wrapper.findAll('.characteristic-card')
@@ -223,9 +412,10 @@ describe('Workshop Page', () => {
       expect(cards[2]!.classes()).toContain('selected')
       expect(wrapper.text()).toMatch(/Selected:.*3.*\/.*7/)
       
-      // Remove the system area
-      const removeButtons = wrapper.findAll('.remove-button')
-      await removeButtons[0]!.trigger('click')
+      // Remove the system area (first remove button)
+      const areaTags = wrapper.findAll('.area-tag')
+      const removeButton = areaTags[0]!.find('button')
+      await removeButton.trigger('click')
       
       // All characteristics should now be deselected
       expect(cards[0]!.classes()).not.toContain('selected')
@@ -234,13 +424,19 @@ describe('Workshop Page', () => {
       expect(wrapper.text()).toMatch(/Selected:.*0.*\/.*7/)
     })
 
-    it('should remove disabled state from characteristics after adding a system area', async () => {
-      const input = wrapper.find('input[type="text"]')
-      const addButton = wrapper.find('button')
+    it('should remove disabled state from characteristics after adding both prerequisites', async () => {
+      const areaInput = wrapper.find('input[placeholder="Enter a system area"]')
+      const goalInput = wrapper.find('input[placeholder="Enter a strategic goal"]')
+      const buttons = wrapper.findAll('button')
+      const addAreaButton = buttons.find(btn => btn.text() === 'Add Area')
+      const addGoalButton = buttons.find(btn => btn.text() === 'Add Goal')
       
-      // Add a system area
-      await input.setValue('Payment Processing')
-      await addButton.trigger('click')
+      // Add a system area and goal
+      await areaInput.setValue('Payment Processing')
+      await addAreaButton!.trigger('click')
+      
+      await goalInput.setValue('Test Goal')
+      await addGoalButton!.trigger('click')
       
       // Cards should no longer have disabled class
       const cards = wrapper.findAll('.characteristic-card')
@@ -249,12 +445,19 @@ describe('Workshop Page', () => {
       })
     })
 
-    it('should select a card when clicked (after system area added)', async () => {
-      // Add a system area first
-      const input = wrapper.find('input[type="text"]')
-      const addButton = wrapper.find('button')
-      await input.setValue('Payment Processing')
-      await addButton.trigger('click')
+    it('should select a card when clicked (after prerequisites added)', async () => {
+      // Add prerequisites first
+      const areaInput = wrapper.find('input[placeholder="Enter a system area"]')
+      const goalInput = wrapper.find('input[placeholder="Enter a strategic goal"]')
+      const buttons = wrapper.findAll('button')
+      const addAreaButton = buttons.find(btn => btn.text() === 'Add Area')
+      const addGoalButton = buttons.find(btn => btn.text() === 'Add Goal')
+      
+      await areaInput.setValue('Payment Processing')
+      await addAreaButton!.trigger('click')
+      
+      await goalInput.setValue('Test Goal')
+      await addGoalButton!.trigger('click')
       
       const cards = wrapper.findAll('.characteristic-card')
       const firstCard = cards[0]!
@@ -265,11 +468,18 @@ describe('Workshop Page', () => {
     })
 
     it('should deselect a card when clicked again', async () => {
-      // Add a system area first
-      const input = wrapper.find('input[type="text"]')
-      const addButton = wrapper.find('button')
-      await input.setValue('Payment Processing')
-      await addButton.trigger('click')
+      // Add prerequisites first
+      const areaInput = wrapper.find('input[placeholder="Enter a system area"]')
+      const goalInput = wrapper.find('input[placeholder="Enter a strategic goal"]')
+      const buttons = wrapper.findAll('button')
+      const addAreaButton = buttons.find(btn => btn.text() === 'Add Area')
+      const addGoalButton = buttons.find(btn => btn.text() === 'Add Goal')
+      
+      await areaInput.setValue('Payment Processing')
+      await addAreaButton!.trigger('click')
+      
+      await goalInput.setValue('Test Goal')
+      await addGoalButton!.trigger('click')
       
       const cards = wrapper.findAll('.characteristic-card')
       const firstCard = cards[0]!
@@ -284,11 +494,18 @@ describe('Workshop Page', () => {
     })
 
     it('should allow multiple cards to be selected', async () => {
-      // Add a system area first
-      const input = wrapper.find('input[type="text"]')
-      const addButton = wrapper.find('button')
-      await input.setValue('Payment Processing')
-      await addButton.trigger('click')
+      // Add prerequisites first
+      const areaInput = wrapper.find('input[placeholder="Enter a system area"]')
+      const goalInput = wrapper.find('input[placeholder="Enter a strategic goal"]')
+      const buttons = wrapper.findAll('button')
+      const addAreaButton = buttons.find(btn => btn.text() === 'Add Area')
+      const addGoalButton = buttons.find(btn => btn.text() === 'Add Goal')
+      
+      await areaInput.setValue('Payment Processing')
+      await addAreaButton!.trigger('click')
+      
+      await goalInput.setValue('Test Goal')
+      await addGoalButton!.trigger('click')
       
       const cards = wrapper.findAll('.characteristic-card')
       
@@ -303,12 +520,19 @@ describe('Workshop Page', () => {
   })
 
   describe('Select 7 Characteristics Workflow', () => {
-    // Helper to add a system area before selecting characteristics
-    const addSystemArea = async () => {
-      const input = wrapper.find('input[type="text"]')
-      const addButton = wrapper.find('button')
-      await input.setValue('Test System Area')
-      await addButton.trigger('click')
+    // Helper to add prerequisites (system area and goal) before selecting characteristics
+    const addPrerequisites = async () => {
+      const areaInput = wrapper.find('input[placeholder="Enter a system area"]')
+      const goalInput = wrapper.find('input[placeholder="Enter a strategic goal"]')
+      const buttons = wrapper.findAll('button')
+      const addAreaButton = buttons.find(btn => btn.text() === 'Add Area')
+      const addGoalButton = buttons.find(btn => btn.text() === 'Add Goal')
+      
+      await areaInput.setValue('Test System Area')
+      await addAreaButton!.trigger('click')
+      
+      await goalInput.setValue('Test Strategic Goal')
+      await addGoalButton!.trigger('click')
     }
 
     it('should display a counter showing number of selected characteristics', () => {
@@ -316,7 +540,7 @@ describe('Workshop Page', () => {
     })
 
     it('should update the counter when characteristics are selected', async () => {
-      await addSystemArea()
+      await addPrerequisites()
       
       const cards = wrapper.findAll('.characteristic-card')
       
@@ -338,7 +562,7 @@ describe('Workshop Page', () => {
     })
 
     it('should have "Continue" button disabled when less than 7 characteristics are selected', async () => {
-      await addSystemArea()
+      await addPrerequisites()
       
       const buttons = wrapper.findAll('button')
       const continueButton = buttons.find(btn => btn.text().includes('Continue'))
@@ -355,7 +579,7 @@ describe('Workshop Page', () => {
     })
 
     it('should enable "Continue" button when exactly 7 characteristics are selected', async () => {
-      await addSystemArea()
+      await addPrerequisites()
       
       const cards = wrapper.findAll('.characteristic-card')
       
@@ -371,7 +595,7 @@ describe('Workshop Page', () => {
     })
 
     it('should prevent selecting more than 7 characteristics', async () => {
-      await addSystemArea()
+      await addPrerequisites()
       
       const cards = wrapper.findAll('.characteristic-card')
       
@@ -391,7 +615,7 @@ describe('Workshop Page', () => {
     })
 
     it('should show a message when trying to select more than 7', async () => {
-      await addSystemArea()
+      await addPrerequisites()
       
       const cards = wrapper.findAll('.characteristic-card')
       
@@ -407,7 +631,7 @@ describe('Workshop Page', () => {
     })
 
     it('should allow deselecting a characteristic when at the limit', async () => {
-      await addSystemArea()
+      await addPrerequisites()
       
       const cards = wrapper.findAll('.characteristic-card')
       
@@ -429,12 +653,19 @@ describe('Workshop Page', () => {
   })
 
   describe('Narrow Down to 3 Phase', () => {
-    // Helper to add a system area and select 7 characteristics
+    // Helper to add prerequisites and select 7 characteristics
     const setupSevenSelected = async () => {
-      const input = wrapper.find('input[type="text"]')
-      const addButton = wrapper.find('button')
-      await input.setValue('Test System Area')
-      await addButton.trigger('click')
+      const areaInput = wrapper.find('input[placeholder="Enter a system area"]')
+      const goalInput = wrapper.find('input[placeholder="Enter a strategic goal"]')
+      const buttons = wrapper.findAll('button')
+      const addAreaButton = buttons.find(btn => btn.text() === 'Add Area')
+      const addGoalButton = buttons.find(btn => btn.text() === 'Add Goal')
+      
+      await areaInput.setValue('Test System Area')
+      await addAreaButton!.trigger('click')
+      
+      await goalInput.setValue('Test Strategic Goal')
+      await addGoalButton!.trigger('click')
       
       const cards = wrapper.findAll('.characteristic-card')
       for (let i = 0; i < 7; i++) {
@@ -574,12 +805,19 @@ describe('Workshop Page', () => {
   })
 
   describe('Navigate Back from Narrow Down Phase', () => {
-    // Helper to add a system area and select 7 characteristics
+    // Helper to add prerequisites and select 7 characteristics
     const setupSevenSelected = async () => {
-      const input = wrapper.find('input[type="text"]')
-      const addButton = wrapper.find('button')
-      await input.setValue('Test System Area')
-      await addButton.trigger('click')
+      const areaInput = wrapper.find('input[placeholder="Enter a system area"]')
+      const goalInput = wrapper.find('input[placeholder="Enter a strategic goal"]')
+      const buttons = wrapper.findAll('button')
+      const addAreaButton = buttons.find(btn => btn.text() === 'Add Area')
+      const addGoalButton = buttons.find(btn => btn.text() === 'Add Goal')
+      
+      await areaInput.setValue('Test System Area')
+      await addAreaButton!.trigger('click')
+      
+      await goalInput.setValue('Test Strategic Goal')
+      await addGoalButton!.trigger('click')
       
       const cards = wrapper.findAll('.characteristic-card')
       for (let i = 0; i < 7; i++) {
