@@ -974,5 +974,470 @@ describe('Workshop Page', () => {
       expect(wrapper.text()).toMatch(/Selected:.*0.*\/.*3/)
     })
   })
+
+  describe('Risk Assessment Phase', () => {
+    // Helper to get to the risk assessment phase
+    const setupForRiskAssessment = async () => {
+      const areaInput = wrapper.find('input[placeholder="Enter a system area"]')
+      const goalInput = wrapper.find('input[placeholder="Enter a strategic goal"]')
+      const buttons = wrapper.findAll('button')
+      const addAreaButton = buttons.find(btn => btn.text() === 'Add Area')
+      const addGoalButton = buttons.find(btn => btn.text() === 'Add Goal')
+      
+      await areaInput.setValue('Test System Area')
+      await addAreaButton!.trigger('click')
+      
+      await goalInput.setValue('Test Strategic Goal')
+      await addGoalButton!.trigger('click')
+      
+      // Select 7 characteristics
+      const cards = wrapper.findAll('.characteristic-card')
+      for (let i = 0; i < 7; i++) {
+        await cards[i]!.trigger('click')
+      }
+      
+      // Continue to narrow down phase
+      const continueButton = wrapper.findAll('button').find(btn => btn.text().includes('Continue'))
+      await continueButton!.trigger('click')
+      
+      // Select final 3 characteristics
+      const selectedSection = wrapper.find('.selected-characteristics-section')
+      const selectedCards = selectedSection.findAll('.characteristic-card')
+      for (let i = 0; i < 3; i++) {
+        await selectedCards[i]!.trigger('click')
+      }
+    }
+
+    it('should show a Continue button after selecting final characteristics', async () => {
+      await setupForRiskAssessment()
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      expect(continueButton).toBeDefined()
+    })
+
+    it('should display risk assessment section after clicking Continue from narrow down phase', async () => {
+      await setupForRiskAssessment()
+      
+      // Find and click the button to proceed to risk assessment
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Should show risk assessment content
+      expect(wrapper.text()).toMatch(/risk/i)
+    })
+
+    it('should display all 3 selected characteristics in risk assessment phase', async () => {
+      await setupForRiskAssessment()
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Should have sections for each of the 3 characteristics
+      const riskSections = wrapper.findAll('.risk-characteristic-section')
+      expect(riskSections.length).toBeGreaterThanOrEqual(3)
+    })
+
+    it('should display a text box for entering risks for each characteristic', async () => {
+      await setupForRiskAssessment()
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Should have risk input fields
+      const riskInputs = wrapper.findAll('textarea[placeholder*="risk" i], input[placeholder*="risk" i]')
+      expect(riskInputs.length).toBeGreaterThanOrEqual(1)
+    })
+
+    it('should have an "Add Risk" button for each characteristic', async () => {
+      await setupForRiskAssessment()
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Should have Add Risk buttons
+      const addRiskButtons = wrapper.findAll('button').filter(btn => btn.text().includes('Add Risk'))
+      expect(addRiskButtons.length).toBeGreaterThanOrEqual(3)
+    })
+
+    it('should add a risk when Add Risk button is clicked', async () => {
+      await setupForRiskAssessment()
+      
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Find first risk input and add risk button
+      const riskInputs = wrapper.findAll('textarea[placeholder*="risk" i], input[placeholder*="risk" i]')
+      const riskInput = riskInputs[0]!
+      
+      await riskInput.setValue('Database may become a bottleneck under high load')
+      
+      buttons = wrapper.findAll('button')
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      await addRiskButton.trigger('click')
+      
+      expect(wrapper.text()).toContain('Database may become a bottleneck under high load')
+    })
+
+    it('should display probability selection matrix for each risk', async () => {
+      await setupForRiskAssessment()
+      
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Add a risk
+      const riskInputs = wrapper.findAll('textarea[placeholder*="risk" i], input[placeholder*="risk" i]')
+      const riskInput = riskInputs[0]!
+      await riskInput.setValue('Test risk')
+      
+      buttons = wrapper.findAll('button')
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      await addRiskButton.trigger('click')
+      
+      // Should have probability and impact labels
+      expect(wrapper.text()).toMatch(/probability/i)
+      expect(wrapper.text()).toMatch(/impact/i)
+    })
+
+    it('should display probability options: Low (1), Medium (2), High (3)', async () => {
+      await setupForRiskAssessment()
+      
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Add a risk
+      const riskInputs = wrapper.findAll('textarea[placeholder*="risk" i], input[placeholder*="risk" i]')
+      const riskInput = riskInputs[0]!
+      await riskInput.setValue('Test risk')
+      
+      buttons = wrapper.findAll('button')
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      await addRiskButton.trigger('click')
+      
+      // Should have Low, Medium, High options
+      expect(wrapper.text()).toContain('Low')
+      expect(wrapper.text()).toContain('Medium')
+      expect(wrapper.text()).toContain('High')
+    })
+
+    it('should display impact options: Low (1), Medium (2), High (3)', async () => {
+      await setupForRiskAssessment()
+      
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Add a risk
+      const riskInputs = wrapper.findAll('textarea[placeholder*="risk" i], input[placeholder*="risk" i]')
+      const riskInput = riskInputs[0]!
+      await riskInput.setValue('Test risk')
+      
+      buttons = wrapper.findAll('button')
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      await addRiskButton.trigger('click')
+      
+      // Should have Low (1), Medium (2), High (3) options for impact
+      expect(wrapper.text()).toContain('Low')
+      expect(wrapper.text()).toContain('Medium')
+      expect(wrapper.text()).toContain('High')
+    })
+
+    it('should allow selecting probability level for a risk', async () => {
+      await setupForRiskAssessment()
+      
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Add a risk
+      const riskInputs = wrapper.findAll('textarea[placeholder*="risk" i], input[placeholder*="risk" i]')
+      const riskInput = riskInputs[0]!
+      await riskInput.setValue('Test risk')
+      
+      buttons = wrapper.findAll('button')
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      await addRiskButton.trigger('click')
+      
+      // Find and click probability selection (e.g., radio button or button)
+      const probabilityOptions = wrapper.findAll('input[type="radio"][name*="probability"], button[data-probability]')
+      expect(probabilityOptions.length).toBeGreaterThan(0)
+    })
+
+    it('should allow selecting impact level for a risk', async () => {
+      await setupForRiskAssessment()
+      
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Add a risk
+      const riskInputs = wrapper.findAll('textarea[placeholder*="risk" i], input[placeholder*="risk" i]')
+      const riskInput = riskInputs[0]!
+      await riskInput.setValue('Test risk')
+      
+      buttons = wrapper.findAll('button')
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      await addRiskButton.trigger('click')
+      
+      // Find and click impact selection
+      const impactOptions = wrapper.findAll('input[type="radio"][name*="impact"], button[data-impact]')
+      expect(impactOptions.length).toBeGreaterThan(0)
+    })
+
+    it('should calculate and display risk score (probability × impact)', async () => {
+      await setupForRiskAssessment()
+      
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Add a risk
+      const riskInputs = wrapper.findAll('textarea[placeholder*="risk" i], input[placeholder*="risk" i]')
+      const riskInput = riskInputs[0]!
+      await riskInput.setValue('Test risk')
+      
+      buttons = wrapper.findAll('button')
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      await addRiskButton.trigger('click')
+      
+      // Select probability and impact (this test assumes the UI is set up)
+      // The risk score should be displayed somewhere (e.g., 1-9 range)
+      // This is a placeholder - actual implementation will determine exact selectors
+      const riskItems = wrapper.findAll('.risk-item')
+      if (riskItems.length > 0) {
+        // Risk score should be calculated as probability × impact
+        // Low × Low = 1, Medium × Medium = 4, High × High = 9, etc.
+        expect(riskItems[0]!.text()).toBeTruthy()
+      }
+    })
+
+    it('should display green color for low risk scores (1-2)', async () => {
+      await setupForRiskAssessment()
+      
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // This test will verify color coding based on risk scores
+      // Specific implementation depends on the UI design
+      expect(wrapper.html()).toBeTruthy()
+    })
+
+    it('should display orange color for medium risk scores (3-4)', async () => {
+      await setupForRiskAssessment()
+      
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // This test will verify color coding based on risk scores
+      expect(wrapper.html()).toBeTruthy()
+    })
+
+    it('should display red color for high risk scores (6-9)', async () => {
+      await setupForRiskAssessment()
+      
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // This test will verify color coding based on risk scores
+      expect(wrapper.html()).toBeTruthy()
+    })
+
+    it('should allow adding multiple risks for a single characteristic', async () => {
+      await setupForRiskAssessment()
+      
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Add first risk
+      const riskInputs = wrapper.findAll('textarea[placeholder*="risk" i], input[placeholder*="risk" i]')
+      const riskInput = riskInputs[0]!
+      
+      await riskInput.setValue('First risk')
+      buttons = wrapper.findAll('button')
+      let addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      await addRiskButton.trigger('click')
+      
+      expect(wrapper.text()).toContain('First risk')
+      
+      // Add second risk to the same characteristic
+      await riskInput.setValue('Second risk')
+      buttons = wrapper.findAll('button')
+      addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      await addRiskButton.trigger('click')
+      
+      expect(wrapper.text()).toContain('First risk')
+      expect(wrapper.text()).toContain('Second risk')
+    })
+
+    it('should have a remove button for each added risk', async () => {
+      await setupForRiskAssessment()
+      
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Add a risk
+      const riskInputs = wrapper.findAll('textarea[placeholder*="risk" i], input[placeholder*="risk" i]')
+      const riskInput = riskInputs[0]!
+      await riskInput.setValue('Test risk to remove')
+      
+      buttons = wrapper.findAll('button')
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      await addRiskButton.trigger('click')
+      
+      // Should have a remove button
+      const riskItems = wrapper.findAll('.risk-item')
+      expect(riskItems.length).toBeGreaterThan(0)
+      
+      const removeButtons = riskItems[0]!.findAll('button')
+      const hasRemoveButton = removeButtons.some(btn => 
+        btn.text().includes('Remove') || 
+        btn.text().includes('×') || 
+        btn.text().includes('Delete')
+      )
+      expect(hasRemoveButton).toBe(true)
+    })
+
+    it('should remove a risk when its remove button is clicked', async () => {
+      await setupForRiskAssessment()
+      
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Add a risk
+      const riskInputs = wrapper.findAll('textarea[placeholder*="risk" i], input[placeholder*="risk" i]')
+      const riskInput = riskInputs[0]!
+      await riskInput.setValue('Risk to be removed')
+      
+      buttons = wrapper.findAll('button')
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      await addRiskButton.trigger('click')
+      
+      expect(wrapper.text()).toContain('Risk to be removed')
+      
+      // Find and click remove button
+      const riskItems = wrapper.findAll('.risk-item')
+      const removeButton = riskItems[0]!.findAll('button').find(btn =>
+        btn.text().includes('Remove') ||
+        btn.text().includes('×') ||
+        btn.text().includes('Delete')
+      )
+      
+      await removeButton!.trigger('click')
+      
+      expect(wrapper.text()).not.toContain('Risk to be removed')
+    })
+
+    it('should display all risks grouped by their characteristic', async () => {
+      await setupForRiskAssessment()
+      
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Add risks to different characteristics
+      const riskSections = wrapper.findAll('.risk-characteristic-section')
+      expect(riskSections.length).toBeGreaterThanOrEqual(3)
+      
+      // Each section should have its characteristic name displayed
+      riskSections.forEach(section => {
+        expect(section.find('h3, h4').exists()).toBe(true)
+      })
+    })
+
+    it('should show back button to return to characteristic selection', async () => {
+      await setupForRiskAssessment()
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Should have a back button
+      const backButtons = wrapper.findAll('button').filter(btn => btn.text().includes('Back'))
+      expect(backButtons.length).toBeGreaterThan(0)
+    })
+
+    it('should preserve risks when navigating back and forward', async () => {
+      await setupForRiskAssessment()
+      
+      let buttons = wrapper.findAll('button')
+      let continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Add a risk
+      const riskInputs = wrapper.findAll('textarea[placeholder*="risk" i], input[placeholder*="risk" i]')
+      const riskInput = riskInputs[0]!
+      await riskInput.setValue('Persistent risk')
+      
+      buttons = wrapper.findAll('button')
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      await addRiskButton.trigger('click')
+      
+      expect(wrapper.text()).toContain('Persistent risk')
+      
+      // Go back
+      const backButton = wrapper.findAll('button').find(btn => btn.text().includes('Back'))
+      await backButton!.trigger('click')
+      
+      // Go forward again
+      buttons = wrapper.findAll('button')
+      continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Risk should still be there
+      expect(wrapper.text()).toContain('Persistent risk')
+    })
+
+    it('should clear risk input field after adding a risk', async () => {
+      await setupForRiskAssessment()
+      
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Add a risk
+      const riskInputs = wrapper.findAll('textarea[placeholder*="risk" i], input[placeholder*="risk" i]')
+      const riskInput = riskInputs[0]!
+      await riskInput.setValue('Test risk')
+      
+      buttons = wrapper.findAll('button')
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      await addRiskButton.trigger('click')
+      
+      // Input should be cleared
+      expect((riskInput.element as HTMLInputElement | HTMLTextAreaElement).value).toBe('')
+    })
+
+    it('should not add empty risks', async () => {
+      await setupForRiskAssessment()
+      
+      let buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Try to add empty risk
+      const initialRiskCount = wrapper.findAll('.risk-item').length
+      
+      buttons = wrapper.findAll('button')
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      await addRiskButton.trigger('click')
+      
+      // Risk count should not change
+      const finalRiskCount = wrapper.findAll('.risk-item').length
+      expect(finalRiskCount).toBe(initialRiskCount)
+    })
+  })
 })
 

@@ -7,6 +7,13 @@ interface Characteristic {
   description: string
 }
 
+interface Risk {
+  id: string
+  description: string
+  probability: 1 | 2 | 3 | null
+  impact: 1 | 2 | 3 | null
+}
+
 const characteristics: Characteristic[] = [
   {
     name: 'Performance',
@@ -128,8 +135,8 @@ const removeStrategicGoal = (index: number) => {
   strategicGoals.value.splice(index, 1)
 }
 
-// Phase tracking: 'initial' (select 7) or 'narrowDown' (narrow to 3)
-const phase = ref<'initial' | 'narrowDown'>('initial')
+// Phase tracking: 'initial' (select 7), 'narrowDown' (narrow to 3), or 'riskAssessment'
+const phase = ref<'initial' | 'narrowDown' | 'riskAssessment'>('initial')
 
 // Characteristics selection state
 const selectedCharacteristics = ref<Set<string>>(new Set())
@@ -138,6 +145,10 @@ const finalSelections = ref<Set<string>>(new Set()) // The final 3 (or more) in 
 const MAX_SELECTIONS = 7
 const SUGGESTED_FINAL = 3
 const showLimitWarning = ref(false)
+
+// Risk assessment state
+const risks = ref<Record<string, Risk[]>>({}) // Risks grouped by characteristic name
+const newRiskInputs = ref<Record<string, string>>({}) // Input fields for each characteristic
 
 const canSelectCharacteristics = () => {
   return systemAreas.value.length > 0 && strategicGoals.value.length > 0
@@ -204,6 +215,100 @@ const goBackToInitialPhase = () => {
   selectedCharacteristics.value = new Set(candidateCharacteristics.value)
   // Clear final selections (they'll be reset if user continues again)
   finalSelections.value.clear()
+}
+
+const canProceedToRiskAssessment = () => {
+  return finalSelections.value.size >= SUGGESTED_FINAL
+}
+
+const proceedToRiskAssessment = () => {
+  if (canProceedToRiskAssessment()) {
+    // Initialize risk tracking for each final characteristic
+    const finalChars = Array.from(finalSelections.value)
+    finalChars.forEach(char => {
+      if (!risks.value[char]) {
+        risks.value[char] = []
+      }
+      if (!newRiskInputs.value[char]) {
+        newRiskInputs.value[char] = ''
+      }
+    })
+    phase.value = 'riskAssessment'
+  }
+}
+
+const goBackToNarrowDown = () => {
+  phase.value = 'narrowDown'
+}
+
+const addRisk = (characteristicName: string) => {
+  const input = newRiskInputs.value[characteristicName]?.trim()
+  if (!input) return
+  
+  const newRisk: Risk = {
+    id: `${characteristicName}-${Date.now()}-${Math.random()}`,
+    description: input,
+    probability: null,
+    impact: null
+  }
+  
+  if (!risks.value[characteristicName]) {
+    risks.value[characteristicName] = []
+  }
+  
+  risks.value[characteristicName].push(newRisk)
+  newRiskInputs.value[characteristicName] = ''
+  
+  // Trigger reactivity
+  risks.value = { ...risks.value }
+}
+
+const removeRisk = (characteristicName: string, riskId: string) => {
+  if (risks.value[characteristicName]) {
+    risks.value[characteristicName] = risks.value[characteristicName].filter(
+      risk => risk.id !== riskId
+    )
+    // Trigger reactivity
+    risks.value = { ...risks.value }
+  }
+}
+
+const updateRiskProbability = (characteristicName: string, riskId: string, probability: 1 | 2 | 3) => {
+  const risk = risks.value[characteristicName]?.find(r => r.id === riskId)
+  if (risk) {
+    risk.probability = probability
+    // Trigger reactivity
+    risks.value = { ...risks.value }
+  }
+}
+
+const updateRiskImpact = (characteristicName: string, riskId: string, impact: 1 | 2 | 3) => {
+  const risk = risks.value[characteristicName]?.find(r => r.id === riskId)
+  if (risk) {
+    risk.impact = impact
+    // Trigger reactivity
+    risks.value = { ...risks.value }
+  }
+}
+
+const getRiskScore = (risk: Risk): number | null => {
+  if (risk.probability && risk.impact) {
+    return risk.probability * risk.impact
+  }
+  return null
+}
+
+const getRiskColorClass = (score: number | null): string => {
+  if (score === null) return 'risk-unassessed'
+  if (score <= 2) return 'risk-low'
+  if (score <= 4) return 'risk-medium'
+  return 'risk-high'
+}
+
+const getFinalCharacteristicsObjects = () => {
+  return characteristics.filter(
+    char => finalSelections.value.has(char.name)
+  )
 }
 
 // Get characteristics that were not in the top 7
@@ -381,6 +486,14 @@ watch(
         >
           Back to initial selection
         </button>
+        
+        <button 
+          class="continue-button"
+          :disabled="!canProceedToRiskAssessment()"
+          @click="proceedToRiskAssessment"
+        >
+          Continue to Risk Assessment
+        </button>
       </div>
 
       <!-- Selected 7 Characteristics (Prominent) -->
@@ -412,6 +525,114 @@ watch(
             :class="{ disabled: true }"
             @click="() => {}"
           />
+        </div>
+      </div>
+    </section>
+
+    <!-- Risk Assessment Phase -->
+    <section v-if="phase === 'riskAssessment'" class="risk-assessment-section">
+      <h2>Risk Assessment</h2>
+      <p>For each of your selected characteristics, identify risks that will need to be managed and assess their probability and impact.</p>
+      
+      <div class="selection-status">
+        <button 
+          class="back-button"
+          @click="goBackToNarrowDown"
+        >
+          Back to characteristic selection
+        </button>
+      </div>
+
+      <div class="risk-characteristics-container">
+        <div 
+          v-for="characteristic in getFinalCharacteristicsObjects()"
+          :key="characteristic.name"
+          class="risk-characteristic-section"
+        >
+          <h3>{{ characteristic.name }}</h3>
+          <p class="characteristic-description">{{ characteristic.description }}</p>
+
+          <!-- Add Risk Input -->
+          <div class="risk-input-group">
+            <textarea
+              v-model="newRiskInputs[characteristic.name]"
+              :placeholder="`Enter a risk for ${characteristic.name}...`"
+              rows="3"
+              @keyup.ctrl.enter="addRisk(characteristic.name)"
+            />
+            <button 
+              class="add-risk-button"
+              @click="addRisk(characteristic.name)"
+            >
+              Add Risk
+            </button>
+          </div>
+
+          <!-- Risk List -->
+          <div v-if="(risks[characteristic.name]?.length ?? 0) > 0" class="risks-list">
+            <div 
+              v-for="risk in risks[characteristic.name]!"
+              :key="risk.id"
+              class="risk-item"
+              :class="getRiskColorClass(getRiskScore(risk))"
+            >
+              <div class="risk-header">
+                <p class="risk-description">{{ risk.description }}</p>
+                <button 
+                  class="remove-risk-button"
+                  @click="removeRisk(characteristic.name, risk.id)"
+                  aria-label="Remove risk"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div class="risk-assessment-matrix">
+                <div class="risk-dimension">
+                  <label class="risk-label">Probability</label>
+                  <div class="risk-options">
+                    <button
+                      v-for="level in [1, 2, 3]"
+                      :key="`prob-${level}`"
+                      class="risk-option-button"
+                      :class="{ selected: risk.probability === level }"
+                      :data-probability="level"
+                      @click="updateRiskProbability(characteristic.name, risk.id, level as 1 | 2 | 3)"
+                    >
+                      <span class="level-label">{{ ['Low', 'Medium', 'High'][level - 1] }}</span>
+                      <span class="level-value">{{ level }}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="risk-dimension">
+                  <label class="risk-label">Impact</label>
+                  <div class="risk-options">
+                    <button
+                      v-for="level in [1, 2, 3]"
+                      :key="`impact-${level}`"
+                      class="risk-option-button"
+                      :class="{ selected: risk.impact === level }"
+                      :data-impact="level"
+                      @click="updateRiskImpact(characteristic.name, risk.id, level as 1 | 2 | 3)"
+                    >
+                      <span class="level-label">{{ ['Low', 'Medium', 'High'][level - 1] }}</span>
+                      <span class="level-value">{{ level }}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div v-if="getRiskScore(risk) !== null" class="risk-score">
+                  <label class="risk-label">Risk Score</label>
+                  <div class="score-value">{{ getRiskScore(risk) }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="no-risks-message">
+            No risks added yet. Use the text area above to add risks for this characteristic.
+          </div>
         </div>
       </div>
     </section>
@@ -691,6 +912,292 @@ section {
   font-size: 0.95rem;
   font-style: italic;
   margin-bottom: 1rem;
+}
+
+/* Risk Assessment Phase Styles */
+.risk-assessment-section {
+  margin-top: 2rem;
+}
+
+.risk-assessment-section h2 {
+  color: #000000;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.risk-assessment-section > p {
+  color: #4b5563;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.risk-characteristics-container {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  margin-top: 2rem;
+}
+
+.risk-characteristic-section {
+  background-color: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 2rem;
+}
+
+.risk-characteristic-section h3 {
+  color: #000000;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.characteristic-description {
+  color: #6b7280;
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+.risk-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.risk-input-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.risk-input-group textarea:focus {
+  outline: none;
+  border-color: #16a34a;
+}
+
+.add-risk-button {
+  align-self: flex-end;
+  padding: 0.75rem 1.5rem;
+  background-color: #16a34a;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-risk-button:hover {
+  background-color: #15803d;
+}
+
+.add-risk-button:active {
+  background-color: #14532d;
+}
+
+.risks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.risk-item {
+  background-color: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  transition: border-color 0.2s;
+}
+
+.risk-item.risk-unassessed {
+  border-color: #d1d5db;
+}
+
+.risk-item.risk-low {
+  border-color: #16a34a;
+  background-color: #f0fdf4;
+}
+
+.risk-item.risk-medium {
+  border-color: #f59e0b;
+  background-color: #fffbeb;
+}
+
+.risk-item.risk-high {
+  border-color: #dc2626;
+  background-color: #fef2f2;
+}
+
+.risk-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.risk-description {
+  flex: 1;
+  color: #000000;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.remove-risk-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  background-color: transparent;
+  color: #dc2626;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.remove-risk-button:hover {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.remove-risk-button:active {
+  background-color: #fecaca;
+}
+
+.risk-assessment-matrix {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.risk-dimension {
+  flex: 1;
+  min-width: 200px;
+}
+
+.risk-label {
+  display: block;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.risk-options {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.risk-option-button {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 0.5rem;
+  background-color: white;
+  border: 2px solid #d1d5db;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.risk-option-button:hover {
+  border-color: #16a34a;
+  background-color: #f0fdf4;
+}
+
+.risk-option-button.selected {
+  border-color: #16a34a;
+  background-color: #dcfce7;
+  font-weight: 600;
+}
+
+.level-label {
+  font-size: 0.875rem;
+  color: #4b5563;
+  margin-bottom: 0.25rem;
+}
+
+.risk-option-button.selected .level-label {
+  color: #15803d;
+}
+
+.level-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #000000;
+}
+
+.risk-option-button.selected .level-value {
+  color: #15803d;
+}
+
+.risk-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  background-color: #f3f4f6;
+  border-radius: 0.5rem;
+}
+
+.risk-item.risk-low .risk-score {
+  background-color: #dcfce7;
+}
+
+.risk-item.risk-medium .risk-score {
+  background-color: #fef3c7;
+}
+
+.risk-item.risk-high .risk-score {
+  background-color: #fee2e2;
+}
+
+.score-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #000000;
+  margin-top: 0.25rem;
+}
+
+.risk-item.risk-low .score-value {
+  color: #15803d;
+}
+
+.risk-item.risk-medium .score-value {
+  color: #d97706;
+}
+
+.risk-item.risk-high .score-value {
+  color: #dc2626;
+}
+
+.no-risks-message {
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
+  background-color: white;
+  border: 2px dashed #d1d5db;
+  border-radius: 0.5rem;
 }
 </style>
 
