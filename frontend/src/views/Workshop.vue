@@ -150,6 +150,13 @@ const showLimitWarning = ref(false)
 const risks = ref<Record<string, Risk[]>>({}) // Risks grouped by characteristic name
 const newRiskInputs = ref<Record<string, string>>({}) // Input fields for each characteristic
 
+// AI Recommendations state
+const showApiKeyDialog = ref(false)
+const apiKey = ref('')
+const recommendations = ref('')
+const isGenerating = ref(false)
+const generationError = ref('')
+
 const canSelectCharacteristics = () => {
   return systemAreas.value.length > 0 && strategicGoals.value.length > 0
 }
@@ -310,6 +317,170 @@ const getFinalCharacteristicsObjects = () => {
     char => finalSelections.value.has(char.name)
   )
 }
+
+// AI Recommendations functions
+const initializeApiKey = () => {
+  // Try to load from localStorage
+  const stored = localStorage.getItem('groq_api_key')
+  if (stored) {
+    apiKey.value = stored
+  }
+}
+
+const saveApiKey = () => {
+  if (apiKey.value.trim()) {
+    localStorage.setItem('groq_api_key', apiKey.value.trim())
+    showApiKeyDialog.value = false
+    generateRecommendations()
+  }
+}
+
+const clearApiKey = () => {
+  apiKey.value = ''
+  localStorage.removeItem('groq_api_key')
+}
+
+const requestApiKey = () => {
+  showApiKeyDialog.value = true
+  generationError.value = ''
+}
+
+const cancelApiKeyDialog = () => {
+  showApiKeyDialog.value = false
+}
+
+const buildPrompt = (): string => {
+  const finalChars = Array.from(finalSelections.value)
+  
+  let prompt = `Analyze this software architecture workshop output and provide recommendations specific to our technology stack and architectural patterns.\n\n`
+  
+  prompt += `CURRENT PLATFORM ARCHITECTURE:\n`
+  prompt += `- Backend: Django modular monolith\n`
+  prompt += `- API Layer: Django Rest Framework (DRF)\n`
+  prompt += `- Integration Pattern: Ports & Adapters (Hexagonal Architecture) for third-party integrations\n`
+  prompt += `- Design Approach: Domain-Driven Design (DDD) principles encouraged\n`
+  prompt += `- Event Handling: Django signals used occasionally for decoupling\n`
+  prompt += `- Frontend: Vue.js Single Page Applications (SPAs)\n`
+  prompt += `- State Management: Pinia for Vue.js state management\n\n`
+  
+  prompt += `SYSTEM AREAS:\n`
+  systemAreas.value.forEach(area => {
+    prompt += `- ${area}\n`
+  })
+  
+  prompt += `\nSTRATEGIC GOALS:\n`
+  strategicGoals.value.forEach(goal => {
+    prompt += `- ${goal}\n`
+  })
+  
+  prompt += `\nSELECTED ARCHITECTURE CHARACTERISTICS WITH RISKS:\n\n`
+  
+  finalChars.forEach(charName => {
+    const char = characteristics.find(c => c.name === charName)
+    if (char) {
+      prompt += `${char.name}:\n`
+      prompt += `  Description: ${char.description}\n`
+      
+      const charRisks = risks.value[charName] || []
+      if (charRisks.length > 0) {
+        prompt += `  Identified Risks:\n`
+        charRisks.forEach(risk => {
+          const score = getRiskScore(risk)
+          prompt += `  - ${risk.description}`
+          if (score !== null) {
+            prompt += ` (Probability: ${risk.probability}, Impact: ${risk.impact}, Risk Score: ${score})`
+          }
+          prompt += `\n`
+        })
+      } else {
+        prompt += `  No risks identified yet.\n`
+      }
+      prompt += `\n`
+    }
+  })
+  
+  prompt += `Please provide recommendations that:\n`
+  prompt += `1. Analyze how these characteristics align with the stated goals\n`
+  prompt += `2. Suggest specific risk mitigation strategies for each identified risk\n`
+  prompt += `3. Recommend architectural patterns or approaches that work within our Django modular monolith\n`
+  prompt += `4. Consider how to leverage DRF, Ports & Adapters, DDD, and Django signals appropriately\n`
+  prompt += `5. Address frontend considerations for Vue.js SPAs with Pinia state management where relevant\n`
+  prompt += `6. Provide Django-specific implementation guidance (models, views, serializers, services, etc.)\n`
+  prompt += `7. Suggest when and how to use Django signals vs other patterns\n`
+  prompt += `8. Recommend Pinia store patterns and Vue.js architecture best practices\n`
+  prompt += `9. Recommend testing strategies appropriate for Django/DRF/Vue/Pinia stack\n`
+  prompt += `10. Provide prioritized, actionable next steps\n\n`
+  prompt += `Keep recommendations practical, specific to Django/DRF/Vue/Pinia, and avoid suggesting major architectural changes unless absolutely necessary for the characteristics. Prefer evolutionary improvements within the existing modular monolith structure.`
+  
+  return prompt
+}
+
+const generateRecommendations = async () => {
+  // Check if we have an API key
+  if (!apiKey.value.trim()) {
+    requestApiKey()
+    return
+  }
+  
+  isGenerating.value = true
+  generationError.value = ''
+  recommendations.value = ''
+  
+  try {
+    // Dynamically import OpenAI to avoid build issues
+    // @ts-ignore - OpenAI package will be installed via npm install openai
+    const { default: OpenAI } = await import('openai')
+    
+    const groq = new OpenAI({
+      apiKey: apiKey.value.trim(),
+      baseURL: 'https://api.groq.com/openai/v1',
+      dangerouslyAllowBrowser: true
+    })
+    
+    const prompt = buildPrompt()
+    
+    const response = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert software architect specializing in Django and Vue.js applications. You have deep knowledge of:\n- Django modular monolith architecture and best practices\n- Django Rest Framework (DRF) for API design\n- Ports & Adapters (Hexagonal Architecture) pattern for third-party integrations\n- Domain-Driven Design (DDD) principles and tactical patterns\n- Django signals and when to use them appropriately\n- Vue.js SPA architecture with Pinia state management\n- Pinia store patterns, actions, getters, and composition\n- Architecture characteristics, design patterns, and risk management\n\nProvide practical, actionable recommendations that respect the existing Django modular monolith structure. Suggest evolutionary improvements rather than revolutionary changes unless absolutely necessary. Focus on Django-specific implementations, DRF viewsets/serializers, service layer patterns, Pinia store organization, and Vue.js/Pinia integration patterns.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 2000
+    })
+    
+    recommendations.value = response.choices[0]?.message?.content || 'No recommendations generated.'
+    
+  } catch (error: any) {
+    console.error('Error generating recommendations:', error)
+    generationError.value = error.message || 'Failed to generate recommendations. Please check your API key and try again.'
+    
+    // If it's an auth error, prompt for API key again
+    if (error.status === 401 || error.message?.includes('API key')) {
+      clearApiKey()
+      requestApiKey()
+    }
+  } finally {
+    isGenerating.value = false
+  }
+}
+
+const copyRecommendations = async () => {
+  try {
+    await navigator.clipboard.writeText(recommendations.value)
+  } catch (error) {
+    console.error('Failed to copy:', error)
+  }
+}
+
+// Initialize API key on mount
+initializeApiKey()
 
 // Get characteristics that were not in the top 7
 const getOtherCharacteristics = () => {
@@ -541,6 +712,14 @@ watch(
         >
           Back to characteristic selection
         </button>
+        
+        <button 
+          class="generate-ai-button"
+          @click="generateRecommendations"
+          :disabled="isGenerating"
+        >
+          {{ isGenerating ? 'Generating...' : 'Generate AI Recommendations' }}
+        </button>
       </div>
 
       <div class="risk-characteristics-container">
@@ -633,6 +812,80 @@ watch(
           <div v-else class="no-risks-message">
             No risks added yet. Use the text area above to add risks for this characteristic.
           </div>
+        </div>
+      </div>
+
+      <!-- API Key Dialog -->
+      <div v-if="showApiKeyDialog" class="api-key-dialog-overlay" @click="cancelApiKeyDialog">
+        <div class="api-key-dialog" @click.stop>
+          <div class="dialog-header">
+            <h3>Enter Groq API Key</h3>
+            <button class="close-dialog-button" @click="cancelApiKeyDialog">×</button>
+          </div>
+          
+          <div class="dialog-content">
+            <p>To generate AI recommendations, you need a Groq API key.</p>
+            <p class="info-note">
+              <strong>Note:</strong> Your API key is stored locally in your browser and never sent to our servers.
+            </p>
+            
+            <div class="api-key-input-group">
+              <label for="apiKeyInput">Groq API Key</label>
+              <input
+                id="apiKeyInput"
+                v-model="apiKey"
+                type="password"
+                placeholder="Enter your Groq API key (gsk_...)"
+                @keyup.enter="saveApiKey"
+              />
+            </div>
+            
+            <p class="help-text">
+              Don't have an API key? 
+              <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">
+                Get one free from Groq →
+              </a>
+            </p>
+          </div>
+          
+          <div class="dialog-actions">
+            <button class="cancel-button" @click="cancelApiKeyDialog">Cancel</button>
+            <button class="save-button" @click="saveApiKey" :disabled="!apiKey.trim()">
+              Save & Generate
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Recommendations Display -->
+      <div v-if="recommendations || generationError" class="ai-recommendations-section">
+        <div class="recommendations-header">
+          <h3>AI Recommendations</h3>
+          <div class="recommendations-actions">
+            <button 
+              v-if="recommendations"
+              class="copy-button"
+              @click="copyRecommendations"
+              title="Copy to clipboard"
+            >
+              Copy
+            </button>
+            <button 
+              class="regenerate-button"
+              @click="generateRecommendations"
+              :disabled="isGenerating"
+            >
+              Regenerate
+            </button>
+          </div>
+        </div>
+        
+        <div v-if="generationError" class="error-message">
+          <strong>Error:</strong> {{ generationError }}
+        </div>
+        
+        <div v-if="recommendations" class="recommendations-content">
+          {{ recommendations }}
         </div>
       </div>
     </section>
@@ -1198,6 +1451,273 @@ section {
   background-color: white;
   border: 2px dashed #d1d5db;
   border-radius: 0.5rem;
+}
+
+/* AI Recommendations Styles */
+.generate-ai-button {
+  padding: 0.75rem 1.5rem;
+  background-color: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-left: auto;
+}
+
+.generate-ai-button:hover:not(:disabled) {
+  background-color: #7c3aed;
+}
+
+.generate-ai-button:active:not(:disabled) {
+  background-color: #6d28d9;
+}
+
+.generate-ai-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* API Key Dialog */
+.api-key-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.api-key-dialog {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-width: 500px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dialog-header h3 {
+  margin: 0;
+  color: #000000;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.close-dialog-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  background-color: transparent;
+  color: #6b7280;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.close-dialog-button:hover {
+  background-color: #f3f4f6;
+  color: #000000;
+}
+
+.dialog-content {
+  padding: 1.5rem;
+}
+
+.dialog-content p {
+  margin: 0 0 1rem 0;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.info-note {
+  padding: 0.75rem;
+  background-color: #dbeafe;
+  border: 1px solid #93c5fd;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.api-key-input-group {
+  margin: 1.5rem 0;
+}
+
+.api-key-input-group label {
+  display: block;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.api-key-input-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.api-key-input-group input:focus {
+  outline: none;
+  border-color: #8b5cf6;
+}
+
+.help-text {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 1rem;
+}
+
+.help-text a {
+  color: #8b5cf6;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.help-text a:hover {
+  text-decoration: underline;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+  justify-content: flex-end;
+}
+
+.cancel-button {
+  padding: 0.75rem 1.5rem;
+  background-color: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.cancel-button:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.save-button {
+  padding: 0.75rem 1.5rem;
+  background-color: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.save-button:hover:not(:disabled) {
+  background-color: #7c3aed;
+}
+
+.save-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* AI Recommendations Section */
+.ai-recommendations-section {
+  margin-top: 3rem;
+  padding: 2rem;
+  background-color: #faf5ff;
+  border: 2px solid #8b5cf6;
+  border-radius: 0.75rem;
+}
+
+.recommendations-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.recommendations-header h3 {
+  margin: 0;
+  color: #000000;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.recommendations-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.copy-button,
+.regenerate-button {
+  padding: 0.5rem 1rem;
+  background-color: white;
+  color: #8b5cf6;
+  border: 1px solid #8b5cf6;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copy-button:hover,
+.regenerate-button:hover:not(:disabled) {
+  background-color: #8b5cf6;
+  color: white;
+}
+
+.regenerate-button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.error-message {
+  padding: 1rem;
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 0.5rem;
+  color: #991b1b;
+  margin-bottom: 1rem;
+}
+
+.recommendations-content {
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  color: #1f2937;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  font-size: 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
 }
 </style>
 
