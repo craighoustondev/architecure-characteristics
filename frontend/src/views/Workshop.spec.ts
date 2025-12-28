@@ -101,8 +101,9 @@ describe('Workshop Page', () => {
       
       await addButton!.trigger('click')
       
-      const modal = wrapper.find('.system-areas-modal')
+      const modal = wrapper.find('.modal-overlay')
       expect(modal.exists()).toBe(true)
+      expect(wrapper.text()).toMatch(/system area/i)
     })
 
     it('should open Strategic Goals modal when clicking "Add Strategic Goals"', async () => {
@@ -112,8 +113,9 @@ describe('Workshop Page', () => {
       
       await addButton!.trigger('click')
       
-      const modal = wrapper.find('.strategic-goals-modal')
+      const modal = wrapper.find('.modal-overlay')
       expect(modal.exists()).toBe(true)
+      expect(wrapper.text()).toMatch(/strategic goal/i)
     })
 
     it('should not allow confirming System Areas modal without adding areas', async () => {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import CharacteristicCard from '../components/CharacteristicCard.vue'
+import ItemListModal from '../components/ItemListModal.vue'
 import { architectureCharacteristics } from '../data/architectureCharacteristics'
 import type { Risk } from '../types'
 
@@ -8,15 +9,11 @@ const characteristics = architectureCharacteristics
 
 // System areas state
 const systemAreas = ref<string[]>([])
-const newArea = ref('')
 const showSystemAreasModal = ref(false) // Don't show modal on load
 const systemAreasConfirmed = ref(false)
 
-const addSystemArea = () => {
-  if (newArea.value.trim()) {
-    systemAreas.value.push(newArea.value.trim())
-    newArea.value = ''
-  }
+const addSystemArea = (value: string) => {
+  systemAreas.value.push(value)
 }
 
 const removeSystemArea = (index: number) => {
@@ -27,7 +24,6 @@ const confirmSystemAreas = () => {
   if (systemAreas.value.length > 0) {
     systemAreasConfirmed.value = true
     showSystemAreasModal.value = false
-    // Don't auto-open Strategic Goals modal anymore
   }
 }
 
@@ -37,15 +33,11 @@ const editSystemAreas = () => {
 
 // Strategic goals state
 const strategicGoals = ref<string[]>([])
-const newGoal = ref('')
 const showStrategicGoalsModal = ref(false)
 const strategicGoalsConfirmed = ref(false)
 
-const addStrategicGoal = () => {
-  if (newGoal.value.trim()) {
-    strategicGoals.value.push(newGoal.value.trim())
-    newGoal.value = ''
-  }
+const addStrategicGoal = (value: string) => {
+  strategicGoals.value.push(value)
 }
 
 const removeStrategicGoal = (index: number) => {
@@ -460,106 +452,36 @@ watch(
     <h1>Workshop</h1>
     
     <!-- System Areas Modal -->
-    <div v-if="showSystemAreasModal" class="modal-overlay" @click="showSystemAreasModal && systemAreasConfirmed ? showSystemAreasModal = false : null">
-      <div class="modal-dialog system-areas-modal" @click.stop>
-        <div class="modal-header">
-          <h2>System Areas</h2>
-          <button v-if="systemAreasConfirmed" class="close-modal-button" @click="showSystemAreasModal = false">×</button>
-        </div>
-        
-        <div class="modal-content">
-          <p>Define the areas of your system that this workshop will focus on.</p>
-          
-          <div class="area-input-group">
-            <input 
-              v-model="newArea"
-              type="text" 
-              placeholder="Enter a system area"
-              @keyup.enter="addSystemArea"
-            />
-            <button @click="addSystemArea">Add Area</button>
-          </div>
-          
-          <div v-if="systemAreas.length > 0" class="areas-list">
-            <div 
-              v-for="(area, index) in systemAreas" 
-              :key="index"
-              class="area-tag"
-            >
-              <span>{{ area }}</span>
-              <button 
-                class="remove-button"
-                @click="removeSystemArea(index)"
-                aria-label="Remove area"
-              >
-                ×
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <div class="modal-actions">
-          <button 
-            class="confirm-button"
-            :disabled="systemAreas.length === 0"
-            @click="confirmSystemAreas"
-          >
-            {{ systemAreasConfirmed ? 'Update' : 'Continue' }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <ItemListModal
+      :show="showSystemAreasModal"
+      title="System Areas"
+      description="Define the areas of your system that this workshop will focus on."
+      placeholder="Enter a system area"
+      add-button-text="Add Area"
+      :items="systemAreas"
+      item-class="area-tag"
+      :confirmed="systemAreasConfirmed"
+      @add="addSystemArea"
+      @remove="removeSystemArea"
+      @confirm="confirmSystemAreas"
+      @close="showSystemAreasModal = false"
+    />
 
     <!-- Strategic Goals Modal -->
-    <div v-if="showStrategicGoalsModal" class="modal-overlay" @click="showStrategicGoalsModal && strategicGoalsConfirmed ? showStrategicGoalsModal = false : null">
-      <div class="modal-dialog strategic-goals-modal" @click.stop>
-        <div class="modal-header">
-          <h2>Strategic Goals</h2>
-          <button v-if="strategicGoalsConfirmed" class="close-modal-button" @click="showStrategicGoalsModal = false">×</button>
-        </div>
-        
-        <div class="modal-content">
-          <p>Define the strategic business or product goals associated with your system areas.</p>
-          
-          <div class="goal-input-group">
-            <input 
-              v-model="newGoal"
-              type="text" 
-              placeholder="Enter a strategic goal"
-              @keyup.enter="addStrategicGoal"
-            />
-            <button @click="addStrategicGoal">Add Goal</button>
-          </div>
-          
-          <div v-if="strategicGoals.length > 0" class="goals-list">
-            <div 
-              v-for="(goal, index) in strategicGoals" 
-              :key="index"
-              class="goal-tag"
-            >
-              <span>{{ goal }}</span>
-              <button 
-                class="remove-button"
-                @click="removeStrategicGoal(index)"
-                aria-label="Remove goal"
-              >
-                ×
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <div class="modal-actions">
-          <button 
-            class="confirm-button"
-            :disabled="strategicGoals.length === 0"
-            @click="confirmStrategicGoals"
-          >
-            {{ strategicGoalsConfirmed ? 'Update' : 'Continue' }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <ItemListModal
+      :show="showStrategicGoalsModal"
+      title="Strategic Goals"
+      description="Define the strategic business or product goals associated with your system areas."
+      placeholder="Enter a strategic goal"
+      add-button-text="Add Goal"
+      :items="strategicGoals"
+      item-class="goal-tag"
+      :confirmed="strategicGoalsConfirmed"
+      @add="addStrategicGoal"
+      @remove="removeStrategicGoal"
+      @confirm="confirmStrategicGoals"
+      @close="showStrategicGoalsModal = false"
+    />
 
     <!-- Confirmed System Areas and Goals Summary -->
     <section class="confirmed-selections-section">
@@ -951,116 +873,6 @@ section {
   margin-bottom: 3rem;
 }
 
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-
-.modal-dialog {
-  background-color: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  max-width: 600px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.5rem;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.modal-header h2 {
-  margin: 0;
-  color: #000000;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-.close-modal-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
-  background-color: transparent;
-  color: #6b7280;
-  border: none;
-  border-radius: 0.375rem;
-  font-size: 1.5rem;
-  line-height: 1;
-  cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.close-modal-button:hover {
-  background-color: #f3f4f6;
-  color: #000000;
-}
-
-.modal-content {
-  flex: 1;
-  padding: 1.5rem;
-  overflow-y: auto;
-}
-
-.modal-content p {
-  color: #4b5563;
-  margin-bottom: 1.5rem;
-  line-height: 1.6;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 0.75rem;
-  padding: 1.5rem;
-  border-top: 2px solid #e5e7eb;
-  background-color: #f9fafb;
-  justify-content: flex-end;
-}
-
-.confirm-button {
-  padding: 0.75rem 2rem;
-  background-color: #16a34a;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s, opacity 0.2s;
-}
-
-.confirm-button:hover:not(:disabled) {
-  background-color: #15803d;
-}
-
-.confirm-button:active:not(:disabled) {
-  background-color: #14532d;
-}
-
-.confirm-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 /* Confirmed Selections Summary */
 .confirmed-selections-section {
   background-color: #f9fafb;
@@ -1161,52 +973,6 @@ section {
 .characteristics-section p {
   color: #4b5563;
   margin-bottom: 1.5rem;
-}
-
-.area-input-group,
-.goal-input-group {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-}
-
-.area-input-group input,
-.goal-input-group input {
-  flex: 1;
-  padding: 0.75rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  transition: border-color 0.2s;
-}
-
-.area-input-group input:focus,
-.goal-input-group input:focus {
-  outline: none;
-  border-color: #16a34a;
-}
-
-.area-input-group button,
-.goal-input-group button {
-  padding: 0.75rem 1.5rem;
-  background-color: #16a34a;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.area-input-group button:hover,
-.goal-input-group button:hover {
-  background-color: #15803d;
-}
-
-.area-input-group button:active,
-.goal-input-group button:active {
-  background-color: #14532d;
 }
 
 .areas-list,
