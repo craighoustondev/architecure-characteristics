@@ -319,19 +319,21 @@ const buildPrompt = (): string => {
     }
   })
   
-  prompt += `Please provide recommendations that:\n`
-  prompt += `1. Analyze how these characteristics align with the stated goals\n`
-  prompt += `2. Suggest specific risk mitigation strategies for each identified risk\n`
-  prompt += `3. Recommend architectural patterns or approaches that work within our Django modular monolith\n`
-  prompt += `4. Consider how to leverage DRF, Ports & Adapters, DDD, and Django signals appropriately\n`
-  prompt += `5. Address frontend considerations for Vue.js SPAs with Pinia state management where relevant\n`
-  prompt += `6. Provide Django-specific implementation guidance (models, views, serializers, services, etc.)\n`
-  prompt += `7. Suggest when and how to use Django signals vs other patterns\n`
-  prompt += `8. Recommend Pinia store patterns and Vue.js architecture best practices\n`
-  prompt += `9. Recommend testing strategies appropriate for Django/DRF/Vue/Pinia stack\n`
-  prompt += `10. Provide prioritized, actionable next steps\n\n`
+  prompt += `Please generate a complete AGENTS.md file that:\n`
+  prompt += `1. Starts with "# AGENTS.md" as the title\n`
+  prompt += `2. Includes a brief project overview section describing the Django modular monolith\n`
+  prompt += `3. Has an "## Architecture Characteristics" section documenting the ${finalChars.length} priority characteristics\n`
+  prompt += `4. Contains a "## Risk Management" section with identified risks and mitigation strategies\n`
+  prompt += `5. Provides a "## Development Guidelines" section covering Django/DRF/Vue/Pinia best practices\n`
+  prompt += `6. Includes "## Setup commands" and "## Testing instructions" sections\n`
+  prompt += `7. Has a "## Code style" section for conventions\n`
+  prompt += `8. Contains a "## Architecture patterns" section for Ports & Adapters, DDD, and signal usage\n`
+  prompt += `9. Includes a "## Deployment considerations" section\n`
+  prompt += `10. Ends with a "## Security considerations" section if Security is a characteristic\n\n`
+  prompt += `Format the entire response as a ready-to-use AGENTS.md markdown file. Use proper markdown syntax with ## for main sections, ### for subsections, bullet points, and code blocks where helpful. Make it comprehensive enough that an AI agent could understand the architectural priorities without reading other documentation.\n\n`
   prompt += `Keep recommendations practical, specific to Django/DRF/Vue/Pinia, and avoid suggesting major architectural changes unless absolutely necessary for the characteristics. Prefer evolutionary improvements within the existing modular monolith structure.`
   
+  console.log(prompt)
   return prompt
 }
 
@@ -364,7 +366,7 @@ const generateRecommendations = async () => {
       messages: [
         {
           role: 'system',
-          content: 'You are an expert software architect specializing in Django and Vue.js applications. You have deep knowledge of:\n- Django modular monolith architecture and best practices\n- Django Rest Framework (DRF) for API design\n- Ports & Adapters (Hexagonal Architecture) pattern for third-party integrations\n- Domain-Driven Design (DDD) principles and tactical patterns\n- Django signals and when to use them appropriately\n- Vue.js SPA architecture with Pinia state management\n- Pinia store patterns, actions, getters, and composition\n- Architecture characteristics, design patterns, and risk management\n\nProvide practical, actionable recommendations that respect the existing Django modular monolith structure. Suggest evolutionary improvements rather than revolutionary changes unless absolutely necessary. Focus on Django-specific implementations, DRF viewsets/serializers, service layer patterns, Pinia store organization, and Vue.js/Pinia integration patterns.'
+          content: 'You are an expert software architect specializing in Django and Vue.js applications with deep knowledge of:\n- Django modular monolith architecture and best practices\n- Django Rest Framework (DRF) for API design\n- Ports & Adapters (Hexagonal Architecture) pattern\n- Domain-Driven Design (DDD) principles\n- Django signals usage patterns\n- Vue.js SPA architecture with Pinia state management\n- AGENTS.md file format and structure (as defined at https://agents.md/)\n- Architecture characteristics, design patterns, and risk management\n\nYour task is to generate a complete, well-formatted AGENTS.md file that AI coding agents can use to understand the project\'s architectural priorities, constraints, and development guidelines. Format the output as a proper markdown document starting with "# AGENTS.md" and using appropriate heading levels (##, ###), bullet points, code blocks, and sections. Make it comprehensive, practical, and specific to the Django/DRF/Vue/Pinia tech stack.'
         },
         {
           role: 'user',
@@ -394,8 +396,31 @@ const generateRecommendations = async () => {
 const copyRecommendations = async () => {
   try {
     await navigator.clipboard.writeText(recommendations.value)
+    alert('AGENTS.md content copied to clipboard!')
   } catch (error) {
     console.error('Failed to copy:', error)
+    alert('Failed to copy to clipboard')
+  }
+}
+
+const exportAgentsMd = () => {
+  if (recommendations.value) {
+    // Create a blob with the markdown content
+    const blob = new Blob([recommendations.value], { type: 'text/markdown;charset=utf-8' })
+    
+    // Create a download link
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'AGENTS.md'
+    
+    // Trigger download
+    document.body.appendChild(link)
+    link.click()
+    
+    // Cleanup
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 }
 
@@ -671,7 +696,7 @@ watch(
           @click="generateRecommendations"
           :disabled="isGenerating"
         >
-          {{ isGenerating ? 'Generating...' : 'Generate AI Recommendations' }}
+          {{ isGenerating ? 'Generating AGENTS.md...' : '🤖 Generate AGENTS.md' }}
         </button>
       </div>
 
@@ -813,22 +838,30 @@ watch(
       <!-- AI Recommendations Display -->
       <div v-if="recommendations || generationError" class="ai-recommendations-section">
         <div class="recommendations-header">
-          <h3>AI Recommendations</h3>
+          <h3>AGENTS.md Generated</h3>
           <div class="recommendations-actions">
+            <button 
+              v-if="recommendations"
+              class="export-button"
+              @click="exportAgentsMd"
+              title="Download AGENTS.md file"
+            >
+              📥 Export AGENTS.md
+            </button>
             <button 
               v-if="recommendations"
               class="copy-button"
               @click="copyRecommendations"
               title="Copy to clipboard"
             >
-              Copy
+              📋 Copy
             </button>
             <button 
               class="regenerate-button"
               @click="generateRecommendations"
               :disabled="isGenerating"
             >
-              Regenerate
+              🔄 Regenerate
             </button>
           </div>
         </div>
@@ -838,7 +871,7 @@ watch(
         </div>
         
         <div v-if="recommendations" class="recommendations-content">
-          {{ recommendations }}
+          <pre>{{ recommendations }}</pre>
         </div>
       </div>
     </section>
@@ -1685,6 +1718,7 @@ section {
   gap: 0.75rem;
 }
 
+.export-button,
 .copy-button,
 .regenerate-button {
   padding: 0.5rem 1rem;
@@ -1696,6 +1730,15 @@ section {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.export-button {
+  background-color: #8b5cf6;
+  color: white;
+}
+
+.export-button:hover {
+  background-color: #7c3aed;
 }
 
 .copy-button:hover,
@@ -1724,9 +1767,18 @@ section {
   border-radius: 0.5rem;
   color: #1f2937;
   line-height: 1.8;
-  white-space: pre-wrap;
-  font-size: 1rem;
+  font-size: 0.95rem;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.recommendations-content pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  margin: 0;
+  font-size: 0.9rem;
 }
 </style>
 
