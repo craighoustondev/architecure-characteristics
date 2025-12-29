@@ -1226,6 +1226,74 @@ describe('Workshop Page', () => {
       expect(riskSections.length).toBeGreaterThanOrEqual(3)
     })
 
+    it('should have only the first characteristic section expanded by default', async () => {
+      await setupForRiskAssessment()
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      const riskSections = wrapper.findAll('.risk-characteristic-section')
+      
+      // First section should be expanded
+      expect(riskSections[0]!.classes()).not.toContain('collapsed')
+      
+      // Other sections should be collapsed
+      for (let i = 1; i < riskSections.length; i++) {
+        expect(riskSections[i]!.classes()).toContain('collapsed')
+      }
+    })
+
+    it('should have clickable headers to toggle collapse/expand', async () => {
+      await setupForRiskAssessment()
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      // Should have characteristic headers
+      const headers = wrapper.findAll('.characteristic-header')
+      expect(headers.length).toBeGreaterThanOrEqual(3)
+    })
+
+    it('should collapse a section when header is clicked', async () => {
+      await setupForRiskAssessment()
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      const header = wrapper.find('.characteristic-header')
+      const section = wrapper.find('.risk-characteristic-section')
+      
+      // Click to collapse
+      await header.trigger('click')
+      
+      // Section should now be collapsed
+      expect(section.classes()).toContain('collapsed')
+      // Content should be hidden in this specific section
+      expect(section.find('.characteristic-content').exists()).toBe(false)
+    })
+
+    it('should expand a collapsed section when header is clicked again', async () => {
+      await setupForRiskAssessment()
+      
+      const buttons = wrapper.findAll('button')
+      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
+      await continueButton!.trigger('click')
+      
+      const header = wrapper.find('.characteristic-header')
+      const section = wrapper.find('.risk-characteristic-section')
+      
+      // Click to collapse
+      await header.trigger('click')
+      expect(section.classes()).toContain('collapsed')
+      
+      // Click to expand again
+      await header.trigger('click')
+      expect(section.classes()).not.toContain('collapsed')
+    })
+
     it('should add a risk when Add Risk button is clicked', async () => {
       await setupForRiskAssessment()
       
@@ -1233,9 +1301,9 @@ describe('Workshop Page', () => {
       const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
       await continueButton!.trigger('click')
 
-      // Should have Add Risk buttons
+      // Only the first section is expanded by default, so only 1 Add Risk button visible
       const addRiskButtons = wrapper.findAll('button').filter(btn => btn.text().includes('Add Risk'))
-      expect(addRiskButtons.length).toBeGreaterThanOrEqual(3)
+      expect(addRiskButtons.length).toBeGreaterThanOrEqual(1)
       
       // Find first risk input and add risk button
       const riskInputs = wrapper.findAll('textarea[placeholder*="risk" i], input[placeholder*="risk" i]')

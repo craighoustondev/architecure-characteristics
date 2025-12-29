@@ -70,6 +70,7 @@ const showLimitWarning = ref(false)
 // Risk assessment state
 const risks = ref<Record<string, Risk[]>>({}) // Risks grouped by characteristic name
 const newRiskInputs = ref<Record<string, string>>({}) // Input fields for each characteristic
+const expandedCharacteristics = ref<Set<string>>(new Set()) // Track which characteristics are expanded
 
 // AI Recommendations state
 const showApiKeyDialog = ref(false)
@@ -154,12 +155,16 @@ const proceedToRiskAssessment = () => {
   if (canProceedToRiskAssessment()) {
     // Initialize risk tracking for each final characteristic
     const finalChars = Array.from(finalSelections.value)
-    finalChars.forEach(char => {
+    finalChars.forEach((char, index) => {
       if (!risks.value[char]) {
         risks.value[char] = []
       }
       if (!newRiskInputs.value[char]) {
         newRiskInputs.value[char] = ''
+      }
+      // Only expand the first characteristic by default
+      if (index === 0) {
+        expandedCharacteristics.value.add(char)
       }
     })
     phase.value = 'riskAssessment'
@@ -168,6 +173,16 @@ const proceedToRiskAssessment = () => {
 
 const goBackToNarrowDown = () => {
   phase.value = 'narrowDown'
+}
+
+const toggleCharacteristic = (characteristicName: string) => {
+  if (expandedCharacteristics.value.has(characteristicName)) {
+    expandedCharacteristics.value.delete(characteristicName)
+  } else {
+    expandedCharacteristics.value.add(characteristicName)
+  }
+  // Trigger reactivity
+  expandedCharacteristics.value = new Set(expandedCharacteristics.value)
 }
 
 const addRisk = (characteristicName: string) => {
@@ -478,7 +493,7 @@ watch(
 
 <template>
   <div class="workshop-page">
-    <h1>Workshop</h1>
+    <h1>Architecture characteristics workshop</h1>
     
     <!-- System Areas Modal -->
     <ItemListModal
@@ -719,90 +734,100 @@ watch(
           v-for="characteristic in getFinalCharacteristicsObjects()"
           :key="characteristic.name"
           class="risk-characteristic-section"
+          :class="{ collapsed: !expandedCharacteristics.has(characteristic.name) }"
         >
-          <h3>{{ characteristic.name }}</h3>
-          <p class="characteristic-description">{{ characteristic.description }}</p>
-
-          <!-- Add Risk Input -->
-          <div class="risk-input-group">
-            <textarea
-              v-model="newRiskInputs[characteristic.name]"
-              :placeholder="`Enter a risk for ${characteristic.name}...`"
-              rows="3"
-              @keyup.ctrl.enter="addRisk(characteristic.name)"
-            />
-            <button 
-              class="add-risk-button"
-              @click="addRisk(characteristic.name)"
-            >
-              Add Risk
-            </button>
+          <div class="characteristic-header" @click="toggleCharacteristic(characteristic.name)">
+            <div class="header-content">
+              <h3>{{ characteristic.name }}</h3>
+              <p class="characteristic-description-preview">{{ characteristic.description }}</p>
+            </div>
+            <span class="expand-hint">
+              {{ expandedCharacteristics.has(characteristic.name) ? 'Click to collapse' : 'Click to expand' }}
+            </span>
           </div>
 
-          <!-- Risk List -->
-          <div v-if="(risks[characteristic.name]?.length ?? 0) > 0" class="risks-list">
-            <div 
-              v-for="risk in risks[characteristic.name]!"
-              :key="risk.id"
-              class="risk-item"
-              :class="getRiskColorClass(getRiskScore(risk))"
-            >
-              <div class="risk-header">
-                <p class="risk-description">{{ risk.description }}</p>
-                <button 
-                  class="remove-risk-button"
-                  @click="removeRisk(characteristic.name, risk.id)"
-                  aria-label="Remove risk"
-                >
-                  ×
-                </button>
-              </div>
+          <div v-if="expandedCharacteristics.has(characteristic.name)" class="characteristic-content">
+            <!-- Add Risk Input -->
+            <div class="risk-input-group">
+              <textarea
+                v-model="newRiskInputs[characteristic.name]"
+                :placeholder="`Enter a risk for ${characteristic.name}...`"
+                rows="3"
+                @keyup.ctrl.enter="addRisk(characteristic.name)"
+              />
+              <button 
+                class="add-risk-button"
+                @click="addRisk(characteristic.name)"
+              >
+                Add Risk
+              </button>
+            </div>
 
-              <div class="risk-assessment-matrix">
-                <div class="risk-dimension">
-                  <label class="risk-label">Probability</label>
-                  <div class="risk-options">
-                    <button
-                      v-for="level in [1, 2, 3]"
-                      :key="`prob-${level}`"
-                      class="risk-option-button"
-                      :class="{ selected: risk.probability === level }"
-                      :data-probability="level"
-                      @click="updateRiskProbability(characteristic.name, risk.id, level as 1 | 2 | 3)"
-                    >
-                      <span class="level-label">{{ ['Low', 'Medium', 'High'][level - 1] }}</span>
-                      <span class="level-value">{{ level }}</span>
-                    </button>
-                  </div>
+            <!-- Risk List -->
+            <div v-if="(risks[characteristic.name]?.length ?? 0) > 0" class="risks-list">
+              <div 
+                v-for="risk in risks[characteristic.name]!"
+                :key="risk.id"
+                class="risk-item"
+                :class="getRiskColorClass(getRiskScore(risk))"
+              >
+                <div class="risk-header">
+                  <p class="risk-description">{{ risk.description }}</p>
+                  <button 
+                    class="remove-risk-button"
+                    @click="removeRisk(characteristic.name, risk.id)"
+                    aria-label="Remove risk"
+                  >
+                    ×
+                  </button>
                 </div>
 
-                <div class="risk-dimension">
-                  <label class="risk-label">Impact</label>
-                  <div class="risk-options">
-                    <button
-                      v-for="level in [1, 2, 3]"
-                      :key="`impact-${level}`"
-                      class="risk-option-button"
-                      :class="{ selected: risk.impact === level }"
-                      :data-impact="level"
-                      @click="updateRiskImpact(characteristic.name, risk.id, level as 1 | 2 | 3)"
-                    >
-                      <span class="level-label">{{ ['Low', 'Medium', 'High'][level - 1] }}</span>
-                      <span class="level-value">{{ level }}</span>
-                    </button>
+                <div class="risk-assessment-matrix">
+                  <div class="risk-dimension">
+                    <label class="risk-label">Probability</label>
+                    <div class="risk-options">
+                      <button
+                        v-for="level in [1, 2, 3]"
+                        :key="`prob-${level}`"
+                        class="risk-option-button"
+                        :class="{ selected: risk.probability === level }"
+                        :data-probability="level"
+                        @click="updateRiskProbability(characteristic.name, risk.id, level as 1 | 2 | 3)"
+                      >
+                        <span class="level-label">{{ ['Low', 'Medium', 'High'][level - 1] }}</span>
+                        <span class="level-value">{{ level }}</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                <div v-if="getRiskScore(risk) !== null" class="risk-score">
-                  <label class="risk-label">Risk Score</label>
-                  <div class="score-value">{{ getRiskScore(risk) }}</div>
+                  <div class="risk-dimension">
+                    <label class="risk-label">Impact</label>
+                    <div class="risk-options">
+                      <button
+                        v-for="level in [1, 2, 3]"
+                        :key="`impact-${level}`"
+                        class="risk-option-button"
+                        :class="{ selected: risk.impact === level }"
+                        :data-impact="level"
+                        @click="updateRiskImpact(characteristic.name, risk.id, level as 1 | 2 | 3)"
+                      >
+                        <span class="level-label">{{ ['Low', 'Medium', 'High'][level - 1] }}</span>
+                        <span class="level-value">{{ level }}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div v-if="getRiskScore(risk) !== null" class="risk-score">
+                    <label class="risk-label">Risk Score</label>
+                    <div class="score-value">{{ getRiskScore(risk) }}</div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div v-else class="no-risks-message">
-            No risks added yet. Use the text area above to add risks for this characteristic.
+            <div v-else class="no-risks-message">
+              No risks added yet. Use the text area above to add risks for this characteristic.
+            </div>
           </div>
         </div>
       </div>
@@ -1216,7 +1241,7 @@ section {
 .risk-characteristics-container {
   display: flex;
   flex-direction: column;
-  gap: 3rem;
+  gap: 1.5rem;
   margin-top: 2rem;
 }
 
@@ -1224,7 +1249,79 @@ section {
   background-color: #f9fafb;
   border: 2px solid #e5e7eb;
   border-radius: 0.75rem;
-  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.risk-characteristic-section.collapsed {
+  background-color: #ffffff;
+}
+
+.characteristic-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s;
+  gap: 1rem;
+}
+
+.characteristic-header:hover {
+  background-color: rgba(139, 92, 246, 0.05);
+}
+
+.header-content {
+  flex: 1;
+}
+
+.characteristic-header h3 {
+  color: #000000;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+}
+
+.characteristic-description-preview {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.expand-hint {
+  font-size: 0.9rem;
+  color: #8b5cf6;
+  font-weight: 600;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+  border: 1px solid #8b5cf6;
+  border-radius: 0.375rem;
+  background-color: rgba(139, 92, 246, 0.05);
+}
+
+.characteristic-header:hover .expand-hint {
+  opacity: 1;
+  background-color: rgba(139, 92, 246, 0.1);
+}
+
+.characteristic-content {
+  padding: 0 2rem 2rem 2rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .risk-characteristic-section h3 {
