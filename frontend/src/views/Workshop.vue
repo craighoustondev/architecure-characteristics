@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import CharacteristicCard from '../components/CharacteristicCard.vue'
 import ItemListModal from '../components/ItemListModal.vue'
+import AgentsMdModal from '../components/AgentsMdModal.vue'
 import { architectureCharacteristics } from '../data/architectureCharacteristics'
 import type { Risk } from '../types'
 
@@ -76,6 +77,7 @@ const apiKey = ref('')
 const recommendations = ref('')
 const isGenerating = ref(false)
 const generationError = ref('')
+const showRecommendationsModal = ref(false)
 
 const canSelectCharacteristics = () => {
   return systemAreasConfirmed.value && strategicGoalsConfirmed.value
@@ -378,10 +380,12 @@ const generateRecommendations = async () => {
     })
     
     recommendations.value = response.choices[0]?.message?.content || 'No recommendations generated.'
+    showRecommendationsModal.value = true // Open modal automatically
     
   } catch (error: any) {
     console.error('Error generating recommendations:', error)
     generationError.value = error.message || 'Failed to generate recommendations. Please check your API key and try again.'
+    showRecommendationsModal.value = true // Open modal to show error
     
     // If it's an auth error, prompt for API key again
     if (error.status === 401 || error.message?.includes('API key')) {
@@ -691,13 +695,23 @@ watch(
           Back to characteristic selection
         </button>
         
-        <button 
-          class="generate-ai-button"
-          @click="generateRecommendations"
-          :disabled="isGenerating"
-        >
-          {{ isGenerating ? 'Generating AGENTS.md...' : '🤖 Generate AGENTS.md' }}
-        </button>
+        <div class="ai-button-group">
+          <button 
+            class="generate-ai-button"
+            @click="generateRecommendations"
+            :disabled="isGenerating"
+          >
+            {{ isGenerating ? 'Generating AGENTS.md...' : '🤖 Generate AGENTS.md' }}
+          </button>
+          
+          <button 
+            v-if="recommendations || generationError"
+            class="view-agents-button"
+            @click="showRecommendationsModal = true"
+          >
+            📄 View AGENTS.md
+          </button>
+        </div>
       </div>
 
       <div class="risk-characteristics-container">
@@ -835,45 +849,17 @@ watch(
         </div>
       </div>
 
-      <!-- AI Recommendations Display -->
-      <div v-if="recommendations || generationError" class="ai-recommendations-section">
-        <div class="recommendations-header">
-          <h3>AGENTS.md Generated</h3>
-          <div class="recommendations-actions">
-            <button 
-              v-if="recommendations"
-              class="export-button"
-              @click="exportAgentsMd"
-              title="Download AGENTS.md file"
-            >
-              📥 Export AGENTS.md
-            </button>
-            <button 
-              v-if="recommendations"
-              class="copy-button"
-              @click="copyRecommendations"
-              title="Copy to clipboard"
-            >
-              📋 Copy
-            </button>
-            <button 
-              class="regenerate-button"
-              @click="generateRecommendations"
-              :disabled="isGenerating"
-            >
-              🔄 Regenerate
-            </button>
-          </div>
-        </div>
-        
-        <div v-if="generationError" class="error-message">
-          <strong>Error:</strong> {{ generationError }}
-        </div>
-        
-        <div v-if="recommendations" class="recommendations-content">
-          <pre>{{ recommendations }}</pre>
-        </div>
-      </div>
+      <!-- AGENTS.md Modal -->
+      <AgentsMdModal
+        :show="showRecommendationsModal"
+        :recommendations="recommendations"
+        :error="generationError"
+        :is-generating="isGenerating"
+        @close="showRecommendationsModal = false"
+        @export="exportAgentsMd"
+        @copy="copyRecommendations"
+        @regenerate="generateRecommendations"
+      />
     </section>
   </div>
 </template>
@@ -1691,94 +1677,27 @@ section {
 }
 
 /* AI Recommendations Section */
-.ai-recommendations-section {
-  margin-top: 3rem;
-  padding: 2rem;
-  background-color: #faf5ff;
-  border: 2px solid #8b5cf6;
-  border-radius: 0.75rem;
-}
-
-.recommendations-header {
+.ai-button-group {
   display: flex;
+  gap: 1rem;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
 }
 
-.recommendations-header h3 {
-  margin: 0;
-  color: #000000;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-.recommendations-actions {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.export-button,
-.copy-button,
-.regenerate-button {
-  padding: 0.5rem 1rem;
-  background-color: white;
+.view-agents-button {
+  padding: 0.75rem 1.5rem;
+  background: white;
   color: #8b5cf6;
-  border: 1px solid #8b5cf6;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
+  border: 2px solid #8b5cf6;
+  border-radius: 0.5rem;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.export-button {
-  background-color: #8b5cf6;
+.view-agents-button:hover {
+  background: #8b5cf6;
   color: white;
-}
-
-.export-button:hover {
-  background-color: #7c3aed;
-}
-
-.copy-button:hover,
-.regenerate-button:hover:not(:disabled) {
-  background-color: #8b5cf6;
-  color: white;
-}
-
-.regenerate-button:disabled {
-  opacity: 0.5;
-  cursor: wait;
-}
-
-.error-message {
-  padding: 1rem;
-  background-color: #fee2e2;
-  border: 1px solid #fecaca;
-  border-radius: 0.5rem;
-  color: #991b1b;
-  margin-bottom: 1rem;
-}
-
-.recommendations-content {
-  padding: 1.5rem;
-  background-color: white;
-  border-radius: 0.5rem;
-  color: #1f2937;
-  line-height: 1.8;
-  font-size: 0.95rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  max-height: 600px;
-  overflow-y: auto;
-}
-
-.recommendations-content pre {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  margin: 0;
-  font-size: 0.9rem;
 }
 </style>
 

@@ -1761,7 +1761,7 @@ describe('Workshop Page', () => {
       
       const buttons = wrapper.findAll('button')
       const aiButton = buttons.find(btn => 
-        btn.text().includes('Generate') && btn.text().includes('Recommendation')
+        btn.text().includes('Generate') && btn.text().includes('AGENTS.md')
       )
       expect(aiButton).toBeDefined()
     })
@@ -1771,7 +1771,7 @@ describe('Workshop Page', () => {
       
       const buttons = wrapper.findAll('button')
       const aiButton = buttons.find(btn => 
-        btn.text().includes('Generate') && btn.text().includes('Recommendation')
+        btn.text().includes('Generate') && btn.text().includes('AGENTS.md')
       )
       
       await aiButton!.trigger('click')
@@ -1787,7 +1787,7 @@ describe('Workshop Page', () => {
       
       const buttons = wrapper.findAll('button')
       const aiButton = buttons.find(btn => 
-        btn.text().includes('Generate') && btn.text().includes('Recommendation')
+        btn.text().includes('Generate') && btn.text().includes('AGENTS.md')
       )
       await aiButton!.trigger('click')
       
@@ -1800,7 +1800,7 @@ describe('Workshop Page', () => {
       
       const buttons = wrapper.findAll('button')
       const aiButton = buttons.find(btn => 
-        btn.text().includes('Generate') && btn.text().includes('Recommendation')
+        btn.text().includes('Generate') && btn.text().includes('AGENTS.md')
       )
       await aiButton!.trigger('click')
       
@@ -1815,7 +1815,7 @@ describe('Workshop Page', () => {
       
       const buttons = wrapper.findAll('button')
       const aiButton = buttons.find(btn => 
-        btn.text().includes('Generate') && btn.text().includes('Recommendation')
+        btn.text().includes('Generate') && btn.text().includes('AGENTS.md')
       )
       await aiButton!.trigger('click')
       
@@ -1835,7 +1835,7 @@ describe('Workshop Page', () => {
       // Actual API call would be mocked in real tests
       const buttons = wrapper.findAll('button')
       const aiButton = buttons.find(btn => 
-        btn.text().includes('Generate') && btn.text().includes('Recommendation')
+        btn.text().includes('Generate') && btn.text().includes('AGENTS.md')
       )
       
       expect(aiButton).toBeDefined()
@@ -1856,7 +1856,7 @@ describe('Workshop Page', () => {
       
       const buttons = wrapper.findAll('button')
       const aiButton = buttons.find(btn => 
-        btn.text().includes('Generate') && btn.text().includes('Recommendation')
+        btn.text().includes('Generate') && btn.text().includes('AGENTS.md')
       )
       await aiButton!.trigger('click')
       
@@ -1919,7 +1919,7 @@ describe('Workshop Page', () => {
       
       const buttons = wrapper.findAll('button')
       const aiButton = buttons.find(btn => 
-        btn.text().includes('Generate') && btn.text().includes('Recommendation')
+        btn.text().includes('Generate') && btn.text().includes('AGENTS.md')
       )
       await aiButton!.trigger('click')
       
@@ -1936,7 +1936,7 @@ describe('Workshop Page', () => {
       // After generating once, should be able to generate again
       const buttons = wrapper.findAll('button')
       const aiButton = buttons.find(btn => 
-        btn.text().includes('Generate') && btn.text().includes('Recommendation')
+        btn.text().includes('Generate') && btn.text().includes('AGENTS.md')
       )
       expect(aiButton).toBeDefined()
     })
@@ -1954,7 +1954,7 @@ describe('Workshop Page', () => {
       
       const buttons = wrapper.findAll('button')
       const aiButton = buttons.find(btn => 
-        btn.text().includes('Generate') && btn.text().includes('Recommendation')
+        btn.text().includes('Generate') && btn.text().includes('AGENTS.md')
       )
       await aiButton!.trigger('click')
       
