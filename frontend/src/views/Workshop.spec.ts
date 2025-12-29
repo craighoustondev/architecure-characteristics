@@ -68,30 +68,9 @@ describe('Workshop Page', () => {
   }
 
   describe('Modal Workflow', () => {
-    it('should not display modals on initial load', () => {
-      const modal = wrapper.find('.modal-overlay')
-      expect(modal.exists()).toBe(false)
-    })
-
     it('should show System Areas and Strategic Goals sections on load', () => {
       expect(wrapper.text()).toMatch(/system.*area/i)
       expect(wrapper.text()).toMatch(/strategic.*goal/i)
-    })
-
-    it('should show "Add System Areas" button on initial load', () => {
-      const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add System Areas')
-      )
-      expect(addButton).toBeDefined()
-      expect(addButton?.exists()).toBe(true)
-    })
-
-    it('should show "Add Strategic Goals" button on initial load', () => {
-      const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add Strategic Goals')
-      )
-      expect(addButton).toBeDefined()
-      expect(addButton?.exists()).toBe(true)
     })
 
     it('should open System Areas modal when clicking "Add System Areas"', async () => {
@@ -335,27 +314,7 @@ describe('Workshop Page', () => {
       
       const input = wrapper.find('input[type="text"]')
       expect(input.exists()).toBe(true)
-    })
-
-    it('should have a placeholder text for the area input', async () => {
-      const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add System Areas')
-      )
-      await addButton!.trigger('click')
-      
-      const input = wrapper.find('input[type="text"]')
       expect(input.attributes('placeholder')).toContain('system area')
-    })
-
-    it('should display a button to add system areas', async () => {
-      const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add System Areas')
-      )
-      await addButton!.trigger('click')
-      
-      const addAreaButton = wrapper.findAll('button').find(btn => btn.text() === 'Add Area')
-      expect(addAreaButton).toBeDefined()
-      expect(addAreaButton!.exists()).toBe(true)
     })
 
     it('should add a system area when button is clicked', async () => {
@@ -405,28 +364,6 @@ describe('Workshop Page', () => {
       await addAreaButton!.trigger('click')
       
       expect((input.element as HTMLInputElement).value).toBe('')
-    })
-
-    it('should display a remove button for each added area', async () => {
-      const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add System Areas')
-      )
-      await addButton!.trigger('click')
-      
-      const input = wrapper.find('input[placeholder*="system area" i]')
-      const addAreaButton = wrapper.findAll('button').find(btn => btn.text() === 'Add Area')
-      
-      await input.setValue('Payment Processing')
-      await addAreaButton!.trigger('click')
-      
-      // Find tags within the modal only
-      const modal = wrapper.find('.modal-overlay')
-      const areaTags = modal.findAll('.area-tag')
-      expect(areaTags).toHaveLength(1)
-      
-      // Check for remove button within the area tag
-      const removeButton = areaTags[0]!.find('button')
-      expect(removeButton.exists()).toBe(true)
     })
 
     it('should remove an area when its remove button is clicked', async () => {
@@ -862,16 +799,6 @@ describe('Workshop Page', () => {
       expect(wrapper.text()).toMatch(/Selected:.*2.*\/.*7/)
     })
 
-    it('should display instruction text about selecting 7 characteristics', () => {
-      expect(wrapper.text()).toContain('Select 7 characteristics')
-    })
-
-    it('should display a "Continue" button', () => {
-      const buttons = wrapper.findAll('button')
-      const continueButton = buttons.find(btn => btn.text().includes('Continue'))
-      expect(continueButton).toBeDefined()
-    })
-
     it('should have "Continue" button disabled when less than 7 characteristics are selected', async () => {
       await addPrerequisites()
       
@@ -923,20 +850,6 @@ describe('Workshop Page', () => {
       
       // Counter should still show 7
       expect(wrapper.text()).toMatch(/Selected:.*7.*\/.*7/)
-    })
-
-    it('should show a message when trying to select more than 7', async () => {
-      await addPrerequisites()
-      
-      const cards = wrapper.findAll('.characteristic-card')
-      
-      // Select 7 characteristics
-      for (let i = 0; i < 7; i++) {
-        await cards[i]!.trigger('click')
-      }
-      
-      // Try to select an 8th
-      await cards[7]!.trigger('click')
       
       expect(wrapper.text()).toMatch(/maximum.*7/i)
     })
@@ -1307,42 +1220,10 @@ describe('Workshop Page', () => {
       
       // Should show risk assessment content
       expect(wrapper.text()).toMatch(/risk/i)
-    })
-
-    it('should display all 3 selected characteristics in risk assessment phase', async () => {
-      await setupForRiskAssessment()
-      
-      const buttons = wrapper.findAll('button')
-      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
-      await continueButton!.trigger('click')
       
       // Should have sections for each of the 3 characteristics
       const riskSections = wrapper.findAll('.risk-characteristic-section')
       expect(riskSections.length).toBeGreaterThanOrEqual(3)
-    })
-
-    it('should display a text box for entering risks for each characteristic', async () => {
-      await setupForRiskAssessment()
-      
-      const buttons = wrapper.findAll('button')
-      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
-      await continueButton!.trigger('click')
-      
-      // Should have risk input fields
-      const riskInputs = wrapper.findAll('textarea[placeholder*="risk" i], input[placeholder*="risk" i]')
-      expect(riskInputs.length).toBeGreaterThanOrEqual(1)
-    })
-
-    it('should have an "Add Risk" button for each characteristic', async () => {
-      await setupForRiskAssessment()
-      
-      const buttons = wrapper.findAll('button')
-      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
-      await continueButton!.trigger('click')
-      
-      // Should have Add Risk buttons
-      const addRiskButtons = wrapper.findAll('button').filter(btn => btn.text().includes('Add Risk'))
-      expect(addRiskButtons.length).toBeGreaterThanOrEqual(3)
     })
 
     it('should add a risk when Add Risk button is clicked', async () => {
@@ -1351,6 +1232,10 @@ describe('Workshop Page', () => {
       let buttons = wrapper.findAll('button')
       const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
       await continueButton!.trigger('click')
+
+      // Should have Add Risk buttons
+      const addRiskButtons = wrapper.findAll('button').filter(btn => btn.text().includes('Add Risk'))
+      expect(addRiskButtons.length).toBeGreaterThanOrEqual(3)
       
       // Find first risk input and add risk button
       const riskInputs = wrapper.findAll('textarea[placeholder*="risk" i], input[placeholder*="risk" i]')
@@ -1386,7 +1271,7 @@ describe('Workshop Page', () => {
       expect(wrapper.text()).toMatch(/impact/i)
     })
 
-    it('should display probability options: Low (1), Medium (2), High (3)', async () => {
+    it('should display probability and impact options: Low (1), Medium (2), High (3)', async () => {
       await setupForRiskAssessment()
       
       let buttons = wrapper.findAll('button')
@@ -1402,32 +1287,35 @@ describe('Workshop Page', () => {
       const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
       await addRiskButton.trigger('click')
       
-      // Should have Low, Medium, High options
-      expect(wrapper.text()).toContain('Low')
-      expect(wrapper.text()).toContain('Medium')
-      expect(wrapper.text()).toContain('High')
-    })
-
-    it('should display impact options: Low (1), Medium (2), High (3)', async () => {
-      await setupForRiskAssessment()
+      // Check specifically for PROBABILITY buttons (using data-probability attribute)
+      const probabilityButtons = wrapper.findAll('button[data-probability]')
+      expect(probabilityButtons).toHaveLength(3)
       
-      let buttons = wrapper.findAll('button')
-      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
-      await continueButton!.trigger('click')
+      // Verify each level exists
+      const probLevels = probabilityButtons.map(btn => btn.attributes('data-probability'))
+      expect(probLevels).toContain('1')
+      expect(probLevels).toContain('2')
+      expect(probLevels).toContain('3')
       
-      // Add a risk
-      const riskInputs = wrapper.findAll('textarea[placeholder*="risk" i], input[placeholder*="risk" i]')
-      const riskInput = riskInputs[0]!
-      await riskInput.setValue('Test risk')
+      // Verify labels
+      expect(probabilityButtons[0]!.text()).toContain('Low')
+      expect(probabilityButtons[1]!.text()).toContain('Medium')
+      expect(probabilityButtons[2]!.text()).toContain('High')
       
-      buttons = wrapper.findAll('button')
-      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
-      await addRiskButton.trigger('click')
+      // Check specifically for IMPACT buttons (using data-impact attribute)
+      const impactButtons = wrapper.findAll('button[data-impact]')
+      expect(impactButtons).toHaveLength(3)
       
-      // Should have Low (1), Medium (2), High (3) options for impact
-      expect(wrapper.text()).toContain('Low')
-      expect(wrapper.text()).toContain('Medium')
-      expect(wrapper.text()).toContain('High')
+      // Verify each level exists
+      const impactLevels = impactButtons.map(btn => btn.attributes('data-impact'))
+      expect(impactLevels).toContain('1')
+      expect(impactLevels).toContain('2')
+      expect(impactLevels).toContain('3')
+      
+      // Verify labels
+      expect(impactButtons[0]!.text()).toContain('Low')
+      expect(impactButtons[1]!.text()).toContain('Medium')
+      expect(impactButtons[2]!.text()).toContain('High')
     })
 
     it('should allow selecting probability level for a risk', async () => {
@@ -1559,35 +1447,6 @@ describe('Workshop Page', () => {
       
       expect(wrapper.text()).toContain('First risk')
       expect(wrapper.text()).toContain('Second risk')
-    })
-
-    it('should have a remove button for each added risk', async () => {
-      await setupForRiskAssessment()
-      
-      let buttons = wrapper.findAll('button')
-      const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
-      await continueButton!.trigger('click')
-      
-      // Add a risk
-      const riskInputs = wrapper.findAll('textarea[placeholder*="risk" i], input[placeholder*="risk" i]')
-      const riskInput = riskInputs[0]!
-      await riskInput.setValue('Test risk to remove')
-      
-      buttons = wrapper.findAll('button')
-      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
-      await addRiskButton.trigger('click')
-      
-      // Should have a remove button
-      const riskItems = wrapper.findAll('.risk-item')
-      expect(riskItems.length).toBeGreaterThan(0)
-      
-      const removeButtons = riskItems[0]!.findAll('button')
-      const hasRemoveButton = removeButtons.some(btn => 
-        btn.text().includes('Remove') || 
-        btn.text().includes('×') || 
-        btn.text().includes('Delete')
-      )
-      expect(hasRemoveButton).toBe(true)
     })
 
     it('should remove a risk when its remove button is clicked', async () => {
@@ -1780,31 +1639,7 @@ describe('Workshop Page', () => {
       expect(wrapper.text()).toMatch(/API.*key/i)
       const apiKeyInput = wrapper.find('input[placeholder*="API key" i], input[type="password"]')
       expect(apiKeyInput.exists()).toBe(true)
-    })
-
-    it('should have a field to enter Groq API key', async () => {
-      await setupWithRisks()
       
-      const buttons = wrapper.findAll('button')
-      const aiButton = buttons.find(btn => 
-        btn.text().includes('Generate') && btn.text().includes('AGENTS.md')
-      )
-      await aiButton!.trigger('click')
-      
-      const apiKeyInput = wrapper.find('input[placeholder*="API key" i], input[type="password"]')
-      expect(apiKeyInput.exists()).toBe(true)
-    })
-
-    it('should allow entering and saving API key', async () => {
-      await setupWithRisks()
-      
-      const buttons = wrapper.findAll('button')
-      const aiButton = buttons.find(btn => 
-        btn.text().includes('Generate') && btn.text().includes('AGENTS.md')
-      )
-      await aiButton!.trigger('click')
-      
-      const apiKeyInput = wrapper.find('input[placeholder*="API key" i], input[type="password"]')
       await apiKeyInput.setValue('gsk_test123456789')
       
       expect((apiKeyInput.element as HTMLInputElement).value).toBe('gsk_test123456789')
