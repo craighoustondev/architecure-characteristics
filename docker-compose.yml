@@ -4,7 +4,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "5173:5173"
+      - "5181:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules  # Prevent overwriting node_modules
