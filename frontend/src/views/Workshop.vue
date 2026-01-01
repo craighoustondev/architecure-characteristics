@@ -3,8 +3,9 @@ import { ref, watch } from 'vue'
 import CharacteristicCard from '../components/CharacteristicCard.vue'
 import ItemListModal from '../components/ItemListModal.vue'
 import AgentsMdModal from '../components/AgentsMdModal.vue'
+import DiscussionModal from '../components/DiscussionModal.vue'
 import { architectureCharacteristics } from '../data/architectureCharacteristics'
-import type { Risk } from '../types'
+import type { Risk, Comment } from '../types'
 
 const characteristics = architectureCharacteristics
 
@@ -66,6 +67,11 @@ const finalSelections = ref<Set<string>>(new Set()) // The final 3 (or more) in 
 const MAX_SELECTIONS = 7
 const SUGGESTED_FINAL = 3
 const showLimitWarning = ref(false)
+
+// Discussion notes state
+const discussionNotes = ref<Record<string, Comment[]>>({}) // Comments grouped by characteristic name
+const showDiscussionModal = ref(false)
+const currentDiscussionCharacteristic = ref<string>('')
 
 // Risk assessment state
 const risks = ref<Record<string, Risk[]>>({}) // Risks grouped by characteristic name
@@ -446,6 +452,66 @@ const exportAgentsMd = () => {
 // Initialize API key on mount
 initializeApiKey()
 
+// Discussion notes functions
+const openDiscussionModal = (characteristicName: string) => {
+  currentDiscussionCharacteristic.value = characteristicName
+  showDiscussionModal.value = true
+}
+
+const closeDiscussionModal = () => {
+  showDiscussionModal.value = false
+  currentDiscussionCharacteristic.value = ''
+}
+
+const addDiscussionComment = (text: string) => {
+  const charName = currentDiscussionCharacteristic.value
+  if (!charName) return
+  
+  const newComment: Comment = {
+    id: `${charName}-comment-${Date.now()}-${Math.random()}`,
+    text: text
+  }
+  
+  if (!discussionNotes.value[charName]) {
+    discussionNotes.value[charName] = []
+  }
+  
+  discussionNotes.value[charName].push(newComment)
+  // Trigger reactivity
+  discussionNotes.value = { ...discussionNotes.value }
+}
+
+const updateDiscussionComment = (id: string, text: string) => {
+  const charName = currentDiscussionCharacteristic.value
+  if (!charName || !discussionNotes.value[charName]) return
+  
+  const comment = discussionNotes.value[charName].find(c => c.id === id)
+  if (comment) {
+    comment.text = text
+    // Trigger reactivity
+    discussionNotes.value = { ...discussionNotes.value }
+  }
+}
+
+const deleteDiscussionComment = (id: string) => {
+  const charName = currentDiscussionCharacteristic.value
+  if (!charName || !discussionNotes.value[charName]) return
+  
+  discussionNotes.value[charName] = discussionNotes.value[charName].filter(
+    c => c.id !== id
+  )
+  // Trigger reactivity
+  discussionNotes.value = { ...discussionNotes.value }
+}
+
+const getDiscussionCommentCount = (characteristicName: string): number => {
+  return discussionNotes.value[characteristicName]?.length ?? 0
+}
+
+const getCurrentDiscussionCharacteristic = () => {
+  return characteristics.find(c => c.name === currentDiscussionCharacteristic.value)
+}
+
 // Get characteristics that were not in the top 7
 const getOtherCharacteristics = () => {
   return characteristics.filter(
@@ -633,8 +699,11 @@ watch(
           :description="characteristic.description"
           :emoji="characteristic.emoji"
           :is-selected="isSelected(characteristic.name)"
+          :show-discussion-button="true"
+          :comment-count="getDiscussionCommentCount(characteristic.name)"
           :class="{ disabled: !canSelectCharacteristics() }"
           @click="toggleSelection(characteristic.name)"
+          @open-discussion="openDiscussionModal(characteristic.name)"
         />
       </div>
     </section>
@@ -676,7 +745,10 @@ watch(
             :description="characteristic.description"
             :emoji="characteristic.emoji"
             :is-selected="isFinallySelected(characteristic.name)"
+            :show-discussion-button="true"
+            :comment-count="getDiscussionCommentCount(characteristic.name)"
             @click="toggleFinalSelection(characteristic.name)"
+            @open-discussion="openDiscussionModal(characteristic.name)"
           />
         </div>
       </div>
@@ -889,6 +961,19 @@ watch(
         @regenerate="generateRecommendations"
       />
     </section>
+
+    <!-- Discussion Notes Modal -->
+    <DiscussionModal
+      v-if="currentDiscussionCharacteristic"
+      :show="showDiscussionModal"
+      :characteristic-name="currentDiscussionCharacteristic"
+      :characteristic-emoji="getCurrentDiscussionCharacteristic()?.emoji ?? ''"
+      :comments="discussionNotes[currentDiscussionCharacteristic] ?? []"
+      @close="closeDiscussionModal"
+      @add-comment="addDiscussionComment"
+      @update-comment="updateDiscussionComment"
+      @delete-comment="deleteDiscussionComment"
+    />
   </div>
 </template>
 

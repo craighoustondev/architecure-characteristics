@@ -4,11 +4,18 @@ interface Props {
   description: string
   isSelected: boolean
   emoji: string
+  commentCount?: number
+  showDiscussionButton?: boolean
 }
 
-defineProps<Props>()
+withDefaults(defineProps<Props>(), {
+  commentCount: 0,
+  showDiscussionButton: false
+})
+
 defineEmits<{
   click: []
+  openDiscussion: []
 }>()
 </script>
 
@@ -23,6 +30,16 @@ defineEmits<{
       {{ name }}
     </h3>
     <p>{{ description }}</p>
+    
+    <button
+      v-if="showDiscussionButton"
+      class="discussion-button"
+      @click.stop="$emit('openDiscussion')"
+      :title="commentCount > 0 ? `${commentCount} comment${commentCount !== 1 ? 's' : ''}` : 'Add discussion notes'"
+    >
+      💬
+      <span v-if="commentCount > 0" class="comment-badge">{{ commentCount }}</span>
+    </button>
   </div>
 </template>
 
@@ -35,6 +52,7 @@ defineEmits<{
   min-height: 160px;
   display: flex;
   flex-direction: column;
+  position: relative;
   transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s, border-color 0.2s;
 }
 
@@ -74,6 +92,51 @@ defineEmits<{
   color: #4b5563;
   line-height: 1.6;
   font-size: 0.95rem;
+}
+
+.discussion-button {
+  position: absolute;
+  bottom: 0.75rem;
+  right: 0.75rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.25rem;
+  transition: background-color 0.2s, transform 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.discussion-button:hover {
+  background-color: #2563eb;
+  transform: scale(1.1);
+}
+
+.discussion-button:active {
+  transform: scale(0.95);
+}
+
+.comment-badge {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  background-color: #dc2626;
+  color: white;
+  border-radius: 50%;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 2px solid white;
 }
 </style>
 

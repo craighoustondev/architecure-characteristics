@@ -10,3 +10,8 @@ export interface Risk {
   probability: 1 | 2 | 3 | null
   impact: 1 | 2 | 3 | null
 }
+
+export interface Comment {
+  id: string
+  text: string
+}

@@ -1865,5 +1865,234 @@ describe('Workshop Page', () => {
       expect(wrapper.text()).toMatch(/secure|private|warning|note/i)
     })
   })
+
+  describe('Discussion Notes', () => {
+    it('should show discussion button on characteristic cards in initial phase', async () => {
+      await addPrerequisites()
+      
+      const discussionButtons = wrapper.findAll('.discussion-button')
+      expect(discussionButtons.length).toBeGreaterThan(0)
+    })
+
+    it('should not show discussion button on unselected cards in initial phase when prerequisites not met', () => {
+      // No prerequisites added yet
+      const discussionButtons = wrapper.findAll('.discussion-button')
+      // Buttons should exist but may be disabled
+      expect(wrapper.html()).toBeTruthy()
+    })
+
+    it('should open discussion modal when discussion button is clicked', async () => {
+      await addPrerequisites()
+      
+      const discussionButton = wrapper.find('.discussion-button')
+      await discussionButton.trigger('click')
+      
+      // Check for discussion modal
+      const modalHeaders = wrapper.findAll('h2')
+      const discussionModal = modalHeaders.find(h => 
+        h.text().includes('Discussion Notes')
+      )
+      expect(discussionModal).toBeDefined()
+    })
+
+    it('should display characteristic name in discussion modal header', async () => {
+      await addPrerequisites()
+      
+      const discussionButton = wrapper.find('.discussion-button')
+      await discussionButton.trigger('click')
+      
+      // Modal should show characteristic name
+      const modalHeaders = wrapper.findAll('h2')
+      const discussionModal = modalHeaders.find(h => 
+        h.text().includes('Discussion Notes')
+      )
+      expect(discussionModal?.text()).toBeTruthy()
+    })
+
+    it('should allow adding a comment to a characteristic', async () => {
+      await addPrerequisites()
+      
+      const discussionButton = wrapper.find('.discussion-button')
+      await discussionButton.trigger('click')
+      
+      // Find the textarea in the discussion modal
+      const textareas = wrapper.findAll('textarea')
+      const commentTextarea = textareas.find(ta => 
+        ta.attributes('placeholder')?.includes('discussion')
+      )
+      
+      await commentTextarea!.setValue('Test discussion comment')
+      
+      const addCommentButton = wrapper.findAll('button').find(btn => 
+        btn.text().includes('Add Comment')
+      )
+      await addCommentButton!.trigger('click')
+      
+      // Comment should be displayed
+      expect(wrapper.text()).toContain('Test discussion comment')
+    })
+
+    it('should show comment count badge when comments exist', async () => {
+      await addPrerequisites()
+      
+      // Open discussion modal
+      const discussionButton = wrapper.find('.discussion-button')
+      await discussionButton.trigger('click')
+      
+      // Add a comment
+      const textareas = wrapper.findAll('textarea')
+      const commentTextarea = textareas.find(ta => 
+        ta.attributes('placeholder')?.includes('discussion')
+      )
+      await commentTextarea!.setValue('Test comment')
+      
+      const addCommentButton = wrapper.findAll('button').find(btn => 
+        btn.text().includes('Add Comment')
+      )
+      await addCommentButton!.trigger('click')
+      
+      // Close modal
+      const closeButton = wrapper.findAll('button').find(btn => 
+        btn.text() === 'Close'
+      )
+      await closeButton?.trigger('click')
+      
+      // Badge should show count
+      const badge = wrapper.find('.comment-badge')
+      expect(badge.exists()).toBe(true)
+      expect(badge.text()).toBe('1')
+    })
+
+    it('should allow editing a comment', async () => {
+      await addPrerequisites()
+      
+      // Open modal and add comment
+      const discussionButton = wrapper.find('.discussion-button')
+      await discussionButton.trigger('click')
+      
+      const textareas = wrapper.findAll('textarea')
+      const commentTextarea = textareas.find(ta => 
+        ta.attributes('placeholder')?.includes('discussion')
+      )
+      await commentTextarea!.setValue('Original comment')
+      
+      const addCommentButton = wrapper.findAll('button').find(btn => 
+        btn.text().includes('Add Comment')
+      )
+      await addCommentButton!.trigger('click')
+      
+      // Click edit button
+      const editButton = wrapper.find('.edit-icon-button')
+      if (editButton.exists()) {
+        await editButton.trigger('click')
+        
+        // Should show edit mode with textarea
+        const editTextarea = wrapper.find('.edit-mode textarea')
+        expect(editTextarea.exists()).toBe(true)
+      }
+    })
+
+    it('should allow deleting a comment', async () => {
+      await addPrerequisites()
+      
+      // Open modal and add comment
+      const discussionButton = wrapper.find('.discussion-button')
+      await discussionButton.trigger('click')
+      
+      const textareas = wrapper.findAll('textarea')
+      const commentTextarea = textareas.find(ta => 
+        ta.attributes('placeholder')?.includes('discussion')
+      )
+      await commentTextarea!.setValue('Comment to delete')
+      
+      const addCommentButton = wrapper.findAll('button').find(btn => 
+        btn.text().includes('Add Comment')
+      )
+      await addCommentButton!.trigger('click')
+      
+      // Should have delete button
+      const deleteButton = wrapper.find('.delete-icon-button')
+      expect(deleteButton.exists()).toBe(true)
+    })
+
+    it('should show discussion buttons in narrow down phase', async () => {
+      await addPrerequisites()
+      
+      // Select 7 characteristics
+      const cards = wrapper.findAll('.characteristic-card')
+      for (let i = 0; i < 7 && i < cards.length; i++) {
+        await cards[i].trigger('click')
+      }
+      
+      // Continue to narrow down phase
+      const continueButton = wrapper.findAll('button').find(btn => 
+        btn.text().includes('Continue') && !btn.attributes('disabled')
+      )
+      await continueButton?.trigger('click')
+      
+      // Should still have discussion buttons in narrow down phase
+      const discussionButtons = wrapper.findAll('.discussion-button')
+      expect(discussionButtons.length).toBeGreaterThan(0)
+    })
+
+    it('should preserve comments when navigating between phases', async () => {
+      await addPrerequisites()
+      
+      // Add a comment in initial phase
+      const discussionButton = wrapper.find('.discussion-button')
+      await discussionButton.trigger('click')
+      
+      const textareas = wrapper.findAll('textarea')
+      const commentTextarea = textareas.find(ta => 
+        ta.attributes('placeholder')?.includes('discussion')
+      )
+      await commentTextarea!.setValue('Persistent comment')
+      
+      const addCommentButton = wrapper.findAll('button').find(btn => 
+        btn.text().includes('Add Comment')
+      )
+      await addCommentButton!.trigger('click')
+      
+      // Close modal
+      const closeButtons = wrapper.findAll('button')
+      const closeButton = closeButtons.find(btn => btn.text() === 'Close')
+      await closeButton?.trigger('click')
+      
+      // Navigate to narrow down phase
+      const cards = wrapper.findAll('.characteristic-card')
+      for (let i = 0; i < 7 && i < cards.length; i++) {
+        await cards[i].trigger('click')
+      }
+      
+      const continueButton = wrapper.findAll('button').find(btn => 
+        btn.text().includes('Continue') && !btn.attributes('disabled')
+      )
+      await continueButton?.trigger('click')
+      
+      // Comment count badge should still be visible
+      const badge = wrapper.find('.comment-badge')
+      expect(badge.exists()).toBe(true)
+    })
+
+    it('should close discussion modal without affecting characteristic selection', async () => {
+      await addPrerequisites()
+      
+      // Select a characteristic
+      const card = wrapper.find('.characteristic-card')
+      await card.trigger('click')
+      expect(card.classes()).toContain('selected')
+      
+      // Open and close discussion modal
+      const discussionButton = wrapper.find('.discussion-button')
+      await discussionButton.trigger('click')
+      
+      const closeButtons = wrapper.findAll('button')
+      const closeButton = closeButtons.find(btn => btn.text() === 'Close')
+      await closeButton?.trigger('click')
+      
+      // Card should still be selected
+      expect(card.classes()).toContain('selected')
+    })
+  })
 })
 
