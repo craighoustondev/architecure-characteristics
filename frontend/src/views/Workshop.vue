@@ -210,7 +210,7 @@ const addRisk = (characteristicName: string) => {
 const removeRisk = (characteristicName: string, riskId: string) => {
   if (risks.value[characteristicName]) {
     risks.value[characteristicName] = risks.value[characteristicName].filter(
-      risk => risk.id !== riskId
+      (risk: Risk) => risk.id !== riskId
     )
     // Trigger reactivity
     risks.value = { ...risks.value }
@@ -301,12 +301,12 @@ const buildPrompt = (): string => {
   prompt += `- State Management: Pinia for Vue.js state management\n\n`
   
   prompt += `SYSTEM AREAS:\n`
-  systemAreas.value.forEach(area => {
+  systemAreas.value.forEach((area: string) => {
     prompt += `- ${area}\n`
   })
   
   prompt += `\nSTRATEGIC GOALS:\n`
-  strategicGoals.value.forEach(goal => {
+  strategicGoals.value.forEach((goal: string) => {
     prompt += `- ${goal}\n`
   })
   
@@ -321,7 +321,7 @@ const buildPrompt = (): string => {
       const charRisks = risks.value[charName] || []
       if (charRisks.length > 0) {
         prompt += `  Identified Risks:\n`
-        charRisks.forEach(risk => {
+        charRisks.forEach((risk: Risk) => {
           const score = getRiskScore(risk)
           prompt += `  - ${risk.description}`
           if (score !== null) {
@@ -339,7 +339,7 @@ const buildPrompt = (): string => {
   prompt += `Please generate a complete AGENTS.md file that:\n`
   prompt += `1. Starts with "# AGENTS.md" as the title\n`
   prompt += `2. Includes a brief project overview section describing the Django modular monolith\n`
-  prompt += `3. Has an "## Architecture Characteristics" section documenting the ${finalChars.length} priority characteristics\n`
+  prompt += `3. Has an "## Architecture characteristics" section documenting the ${finalChars.length} priority characteristics\n`
   prompt += `4. Contains a "## Risk Management" section with identified risks and mitigation strategies\n`
   prompt += `5. Provides a "## Development Guidelines" section covering Django/DRF/Vue/Pinia best practices\n`
   prompt += `6. Includes "## Setup commands" and "## Testing instructions" sections\n`
@@ -463,7 +463,7 @@ const getCandidateCharacteristicsObjects = () => {
 // Watch for when all system areas are removed and clear selections
 watch(
   () => systemAreas.value.length,
-  (newLength) => {
+  (newLength: number) => {
     if (newLength === 0) {
       // Reset confirmation flag
       systemAreasConfirmed.value = false
@@ -478,7 +478,7 @@ watch(
 // Watch for when all strategic goals are removed and clear selections
 watch(
   () => strategicGoals.value.length,
-  (newLength) => {
+  (newLength: number) => {
     if (newLength === 0) {
       // Reset confirmation flag
       strategicGoalsConfirmed.value = false
@@ -495,10 +495,10 @@ watch(
   <div class="workshop-page">
     <h1>Architecture characteristics workshop</h1>
     
-    <!-- System Areas Modal -->
+    <!-- System areas modal -->
     <ItemListModal
       :show="showSystemAreasModal"
-      title="System Areas"
+      title="System areas"
       description="Define the areas of your system that this workshop will focus on."
       placeholder="Enter a system area"
       add-button-text="Add Area"
@@ -511,10 +511,10 @@ watch(
       @close="showSystemAreasModal = false"
     />
 
-    <!-- Strategic Goals Modal -->
+    <!-- Strategic goals Modal -->
     <ItemListModal
       :show="showStrategicGoalsModal"
-      title="Strategic Goals"
+      title="Strategic goals"
       description="Define the strategic business or product goals associated with your system areas."
       placeholder="Enter a strategic goal"
       add-button-text="Add Goal"
@@ -527,12 +527,12 @@ watch(
       @close="showStrategicGoalsModal = false"
     />
 
-    <!-- Confirmed System Areas and Goals Summary -->
+    <!-- Confirmed System areas and goals summary -->
     <section class="confirmed-selections-section">
-      <!-- System Areas Summary -->
+      <!-- System areas summary -->
       <div class="selection-summary">
         <div class="summary-header">
-          <h3>System Areas</h3>
+          <h3>System areas</h3>
           <button v-if="systemAreas.length > 0" class="edit-button" @click="editSystemAreas">Edit</button>
         </div>
         <div v-if="systemAreas.length > 0" class="areas-list">
@@ -554,15 +554,15 @@ watch(
         <div v-else class="empty-state">
           <p>Define the areas of your system that this workshop will focus on.</p>
           <button class="add-button" @click="editSystemAreas">
-            + Add System Areas
+            + Add system areas
           </button>
         </div>
       </div>
 
-      <!-- Strategic Goals Summary -->
+      <!-- Strategic goals summary -->
       <div class="selection-summary">
         <div class="summary-header">
-          <h3>Strategic Goals</h3>
+          <h3>Strategic goals</h3>
           <button v-if="strategicGoals.length > 0" class="edit-button" @click="editStrategicGoals">Edit</button>
         </div>
         <div v-if="strategicGoals.length > 0" class="goals-list">
@@ -584,7 +584,7 @@ watch(
         <div v-else class="empty-state">
           <p>Define the strategic business or product goals associated with your system areas.</p>
           <button class="add-button" @click="editStrategicGoals">
-            + Add Strategic Goals
+            + Add strategic goals
           </button>
         </div>
       </div>
@@ -592,7 +592,7 @@ watch(
 
     <!-- Initial Phase: Select 7 Characteristics -->
     <section v-if="phase === 'initial'" class="characteristics-section">
-      <h2>Architecture Characteristics</h2>
+      <h2>Architecture characteristics</h2>
       <p>Select 7 characteristics that are most relevant to your system areas.</p>
       
       <div v-if="!canSelectCharacteristics()" class="info-message">
@@ -631,6 +631,7 @@ watch(
           :key="characteristic.name"
           :name="characteristic.name"
           :description="characteristic.description"
+          :emoji="characteristic.emoji"
           :is-selected="isSelected(characteristic.name)"
           :class="{ disabled: !canSelectCharacteristics() }"
           @click="toggleSelection(characteristic.name)"
@@ -640,7 +641,7 @@ watch(
 
     <!-- Narrow Down Phase: Select Final 3 -->
     <section v-if="phase === 'narrowDown'" class="narrow-down-section">
-      <h2>Narrow Down to Top 3</h2>
+      <h2>Narrow down to top 3</h2>
       <p>Review your 7 selected characteristics and narrow them down to the 3 most important ones for your system areas. This is a suggested limit - you can select more if needed.</p>
       
       <div class="selection-status">
@@ -660,7 +661,7 @@ watch(
           :disabled="!canProceedToRiskAssessment()"
           @click="proceedToRiskAssessment"
         >
-          Continue to Risk Assessment
+          Continue to Risk assessment
         </button>
       </div>
 
@@ -673,6 +674,7 @@ watch(
             :key="characteristic.name"
             :name="characteristic.name"
             :description="characteristic.description"
+            :emoji="characteristic.emoji"
             :is-selected="isFinallySelected(characteristic.name)"
             @click="toggleFinalSelection(characteristic.name)"
           />
@@ -689,6 +691,7 @@ watch(
             :key="characteristic.name"
             :name="characteristic.name"
             :description="characteristic.description"
+            :emoji="characteristic.emoji"
             :is-selected="false"
             :class="{ disabled: true }"
             @click="() => {}"
@@ -697,9 +700,9 @@ watch(
       </div>
     </section>
 
-    <!-- Risk Assessment Phase -->
+    <!-- Risk assessment phase -->
     <section v-if="phase === 'riskAssessment'" class="risk-assessment-section">
-      <h2>Risk Assessment</h2>
+      <h2>Risk assessment</h2>
       <p>For each of your selected characteristics, identify risks that will need to be managed and assess their probability and impact.</p>
       
       <div class="selection-status">
@@ -747,7 +750,7 @@ watch(
           </div>
 
           <div v-if="expandedCharacteristics.has(characteristic.name)" class="characteristic-content">
-            <!-- Add Risk Input -->
+            <!-- Add risk Input -->
             <div class="risk-input-group">
               <textarea
                 v-model="newRiskInputs[characteristic.name]"
@@ -759,7 +762,7 @@ watch(
                 class="add-risk-button"
                 @click="addRisk(characteristic.name)"
               >
-                Add Risk
+                Add risk
               </button>
             </div>
 
@@ -1152,9 +1155,27 @@ section {
 
 .characteristics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 1.5rem;
   margin-top: 2rem;
+}
+
+@media (max-width: 1400px) {
+  .characteristics-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 1024px) {
+  .characteristics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .characteristics-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .characteristics-grid.grid-disabled {
@@ -1220,7 +1241,7 @@ section {
   margin-bottom: 1rem;
 }
 
-/* Risk Assessment Phase Styles */
+/* Risk assessment phase styles */
 .risk-assessment-section {
   margin-top: 2rem;
 }

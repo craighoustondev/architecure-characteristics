@@ -21,10 +21,10 @@ describe('Workshop Page', () => {
     })
   })
 
-  // Helper to open System Areas modal and add areas
+  // Helper to open System areas modal and add areas
   const openAndAddSystemAreas = async (areas: string[]) => {
     const addButton = wrapper.findAll('button').find(btn => 
-      btn.text().includes('Add System Areas')
+      btn.text().includes('Add System areas')
     )
     await addButton!.trigger('click')
     
@@ -41,10 +41,10 @@ describe('Workshop Page', () => {
     await confirmButton!.trigger('click')
   }
 
-  // Helper to open Strategic Goals modal and add goals
+  // Helper to open Strategic goals modal and add goals
   const openAndAddStrategicGoals = async (goals: string[]) => {
     const addButton = wrapper.findAll('button').find(btn => 
-      btn.text().includes('Add Strategic Goals')
+      btn.text().includes('Add Strategic goals')
     )
     await addButton!.trigger('click')
     
@@ -68,14 +68,14 @@ describe('Workshop Page', () => {
   }
 
   describe('Modal Workflow', () => {
-    it('should show System Areas and Strategic Goals sections on load', () => {
+    it('should show System areas and Strategic goals sections on load', () => {
       expect(wrapper.text()).toMatch(/system.*area/i)
       expect(wrapper.text()).toMatch(/strategic.*goal/i)
     })
 
-    it('should open System Areas modal when clicking "Add System Areas"', async () => {
+    it('should open System areas modal when clicking "Add System areas"', async () => {
       const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add System Areas')
+        btn.text().includes('Add System areas')
       )
       
       await addButton!.trigger('click')
@@ -85,9 +85,9 @@ describe('Workshop Page', () => {
       expect(wrapper.text()).toMatch(/system area/i)
     })
 
-    it('should open Strategic Goals modal when clicking "Add Strategic Goals"', async () => {
+    it('should open Strategic goals modal when clicking "Add Strategic goals"', async () => {
       const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add Strategic Goals')
+        btn.text().includes('Add Strategic goals')
       )
       
       await addButton!.trigger('click')
@@ -97,9 +97,9 @@ describe('Workshop Page', () => {
       expect(wrapper.text()).toMatch(/strategic goal/i)
     })
 
-    it('should not allow confirming System Areas modal without adding areas', async () => {
+    it('should not allow confirming System areas modal without adding areas', async () => {
       const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add System Areas')
+        btn.text().includes('Add System areas')
       )
       await addButton!.trigger('click')
       
@@ -114,7 +114,7 @@ describe('Workshop Page', () => {
     it('should show confirmed system areas after closing modal', async () => {
       // Open modal
       const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add System Areas')
+        btn.text().includes('Add System areas')
       )
       await addButton!.trigger('click')
       
@@ -147,10 +147,10 @@ describe('Workshop Page', () => {
       })
     })
 
-    it('should allow re-opening System Areas modal to edit', async () => {
+    it('should allow re-opening System areas modal to edit', async () => {
       // Add System Area
       let addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add System Areas')
+        btn.text().includes('Add System areas')
       )
       await addButton!.trigger('click')
       
@@ -175,7 +175,7 @@ describe('Workshop Page', () => {
     it('should allow removing confirmed system areas', async () => {
       // Add System Area
       let addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add System Areas')
+        btn.text().includes('Add System areas')
       )
       await addButton!.trigger('click')
       
@@ -200,7 +200,7 @@ describe('Workshop Page', () => {
     })
 
     it('should disable characteristic selection when all system areas removed', async () => {
-      // Complete System Areas and Strategic Goals
+      // Complete System areas and Strategic goals
       await addPrerequisites()
       
       // Characteristics should be enabled
@@ -224,7 +224,7 @@ describe('Workshop Page', () => {
     })
 
     it('should disable characteristic selection when all strategic goals removed', async () => {
-      // Complete System Areas and Strategic Goals
+      // Complete System areas and Strategic goals
       await addPrerequisites()
       
       // Remove all strategic goals from the confirmed section
@@ -241,8 +241,8 @@ describe('Workshop Page', () => {
       })
     })
 
-    it('should show "Add System Areas" button when all areas removed', async () => {
-      // Add System Areas
+    it('should show "Add System areas" button when all areas removed', async () => {
+      // Add System areas
       await openAndAddSystemAreas(['Payment Processing'])
       
       // Remove all system areas from the confirmed section
@@ -255,13 +255,13 @@ describe('Workshop Page', () => {
       // Should show add button in empty state
       expect(wrapper.text()).toMatch(/add.*system.*area/i)
       const addSystemAreasButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add System Areas')
+        btn.text().includes('Add System areas')
       )
       expect(addSystemAreasButton).toBeDefined()
     })
 
-    it('should reopen modal when clicking "Add System Areas" button', async () => {
-      // Add System Areas
+    it('should reopen modal when clicking "Add System areas" button', async () => {
+      // Add System areas
       await openAndAddSystemAreas(['Payment Processing'])
       
       // Remove all system areas from the confirmed section
@@ -273,7 +273,7 @@ describe('Workshop Page', () => {
       
       // Click add button in empty state
       const addSystemAreasButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add System Areas')
+        btn.text().includes('Add System areas')
       )
       await addSystemAreasButton!.trigger('click')
       
@@ -285,7 +285,7 @@ describe('Workshop Page', () => {
       expect(wrapper.text()).toMatch(/system area/i)
     })
 
-    it('should show "Add Strategic Goals" button when all goals removed', async () => {
+    it('should show "Add Strategic goals" button when all goals removed', async () => {
       // Complete both modals
       await addPrerequisites()
       
@@ -299,16 +299,16 @@ describe('Workshop Page', () => {
       // Should show add button in empty state
       expect(wrapper.text()).toMatch(/add.*strategic.*goal/i)
       const addGoalsButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add Strategic Goals')
+        btn.text().includes('Add Strategic goals')
       )
       expect(addGoalsButton).toBeDefined()
     })
   })
 
-  describe('System Areas', () => {
+  describe('System areas', () => {
     it('should display an input field for adding system areas when modal is open', async () => {
       const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add System Areas')
+        btn.text().includes('Add System areas')
       )
       await addButton!.trigger('click')
       
@@ -319,7 +319,7 @@ describe('Workshop Page', () => {
 
     it('should add a system area when button is clicked', async () => {
       const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add System Areas')
+        btn.text().includes('Add System areas')
       )
       await addButton!.trigger('click')
       
@@ -334,7 +334,7 @@ describe('Workshop Page', () => {
 
     it('should display multiple added system areas', async () => {
       const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add System Areas')
+        btn.text().includes('Add System areas')
       )
       await addButton!.trigger('click')
       
@@ -353,7 +353,7 @@ describe('Workshop Page', () => {
 
     it('should clear the input field after adding an area', async () => {
       const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add System Areas')
+        btn.text().includes('Add System areas')
       )
       await addButton!.trigger('click')
       
@@ -368,7 +368,7 @@ describe('Workshop Page', () => {
 
     it('should remove an area when its remove button is clicked', async () => {
       const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add System Areas')
+        btn.text().includes('Add System areas')
       )
       await addButton!.trigger('click')
       
@@ -389,7 +389,7 @@ describe('Workshop Page', () => {
 
     it('should remove only the specific area when multiple areas exist', async () => {
       const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add System Areas')
+        btn.text().includes('Add System areas')
       )
       await addButton!.trigger('click')
       
@@ -420,12 +420,12 @@ describe('Workshop Page', () => {
     })
   })
 
-  describe('Strategic Goals', () => {
+  describe('Strategic goals', () => {
     it('should display an input field for adding strategic business/product goals when modal is open', async () => {
       await openAndAddSystemAreas(['Test Area'])
       
       const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add Strategic Goals')
+        btn.text().includes('Add Strategic goals')
       )
       await addButton!.trigger('click')
       
@@ -437,7 +437,7 @@ describe('Workshop Page', () => {
       await openAndAddSystemAreas(['Test Area'])
       
       const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add Strategic Goals')
+        btn.text().includes('Add Strategic goals')
       )
       await addButton!.trigger('click')
       
@@ -450,7 +450,7 @@ describe('Workshop Page', () => {
       await openAndAddSystemAreas(['Test Area'])
       
       const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add Strategic Goals')
+        btn.text().includes('Add Strategic goals')
       )
       await addButton!.trigger('click')
       
@@ -467,7 +467,7 @@ describe('Workshop Page', () => {
       await openAndAddSystemAreas(['Test Area'])
       
       const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add Strategic Goals')
+        btn.text().includes('Add Strategic goals')
       )
       await addButton!.trigger('click')
       
@@ -488,7 +488,7 @@ describe('Workshop Page', () => {
       await openAndAddSystemAreas(['Test Area'])
       
       const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add Strategic Goals')
+        btn.text().includes('Add Strategic goals')
       )
       await addButton!.trigger('click')
       
@@ -505,7 +505,7 @@ describe('Workshop Page', () => {
       await openAndAddSystemAreas(['Test Area'])
       
       const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add Strategic Goals')
+        btn.text().includes('Add Strategic goals')
       )
       await addButton!.trigger('click')
       
@@ -528,7 +528,7 @@ describe('Workshop Page', () => {
       await openAndAddSystemAreas(['Test Area'])
       
       const addButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Add Strategic Goals')
+        btn.text().includes('Add Strategic goals')
       )
       await addButton!.trigger('click')
       
@@ -559,7 +559,7 @@ describe('Workshop Page', () => {
     })
   })
 
-  describe('Architecture Characteristics', () => {
+  describe('Architecture characteristics', () => {
     it('should display all 22 architecture characteristic cards', () => {
       const cards = wrapper.findAll('.characteristic-card')
       expect(cards).toHaveLength(22)
@@ -668,7 +668,7 @@ describe('Workshop Page', () => {
       
       // Remove the goal via the Edit button
       const editGoalsButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Edit') && wrapper.text().includes('Strategic Goals')
+        btn.text().includes('Edit') && wrapper.text().includes('Strategic goals')
       )
       await editGoalsButton!.trigger('click')
       
@@ -705,7 +705,7 @@ describe('Workshop Page', () => {
       
       // Remove the system area via the Edit button
       const editAreasButton = wrapper.findAll('button').find(btn => 
-        btn.text().includes('Edit') && wrapper.text().includes('System Areas')
+        btn.text().includes('Edit') && wrapper.text().includes('System areas')
       )
       await editAreasButton!.trigger('click')
       
@@ -1179,7 +1179,7 @@ describe('Workshop Page', () => {
     })
   })
 
-  describe('Risk Assessment Phase', () => {
+  describe('Risk assessment Phase', () => {
     // Helper to get to the risk assessment phase
     const setupForRiskAssessment = async () => {
       await addPrerequisites()
@@ -1294,15 +1294,15 @@ describe('Workshop Page', () => {
       expect(section.classes()).not.toContain('collapsed')
     })
 
-    it('should add a risk when Add Risk button is clicked', async () => {
+    it('should add a risk when Add risk button is clicked', async () => {
       await setupForRiskAssessment()
       
       let buttons = wrapper.findAll('button')
       const continueButton = buttons.find(btn => btn.text().includes('Continue') || btn.text().includes('Assess Risks'))
       await continueButton!.trigger('click')
 
-      // Only the first section is expanded by default, so only 1 Add Risk button visible
-      const addRiskButtons = wrapper.findAll('button').filter(btn => btn.text().includes('Add Risk'))
+      // Only the first section is expanded by default, so only 1 Add risk button visible
+      const addRiskButtons = wrapper.findAll('button').filter(btn => btn.text().includes('Add risk'))
       expect(addRiskButtons.length).toBeGreaterThanOrEqual(1)
       
       // Find first risk input and add risk button
@@ -1312,7 +1312,7 @@ describe('Workshop Page', () => {
       await riskInput.setValue('Database may become a bottleneck under high load')
       
       buttons = wrapper.findAll('button')
-      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add risk'))[0]!
       await addRiskButton.trigger('click')
       
       expect(wrapper.text()).toContain('Database may become a bottleneck under high load')
@@ -1331,7 +1331,7 @@ describe('Workshop Page', () => {
       await riskInput.setValue('Test risk')
       
       buttons = wrapper.findAll('button')
-      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add risk'))[0]!
       await addRiskButton.trigger('click')
       
       // Should have probability and impact labels
@@ -1352,7 +1352,7 @@ describe('Workshop Page', () => {
       await riskInput.setValue('Test risk')
       
       buttons = wrapper.findAll('button')
-      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add risk'))[0]!
       await addRiskButton.trigger('click')
       
       // Check specifically for PROBABILITY buttons (using data-probability attribute)
@@ -1399,7 +1399,7 @@ describe('Workshop Page', () => {
       await riskInput.setValue('Test risk')
       
       buttons = wrapper.findAll('button')
-      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add risk'))[0]!
       await addRiskButton.trigger('click')
       
       // Find and click probability selection (e.g., radio button or button)
@@ -1420,7 +1420,7 @@ describe('Workshop Page', () => {
       await riskInput.setValue('Test risk')
       
       buttons = wrapper.findAll('button')
-      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add risk'))[0]!
       await addRiskButton.trigger('click')
       
       // Find and click impact selection
@@ -1441,7 +1441,7 @@ describe('Workshop Page', () => {
       await riskInput.setValue('Test risk')
       
       buttons = wrapper.findAll('button')
-      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add risk'))[0]!
       await addRiskButton.trigger('click')
       
       // Select probability and impact (this test assumes the UI is set up)
@@ -1502,7 +1502,7 @@ describe('Workshop Page', () => {
       
       await riskInput.setValue('First risk')
       buttons = wrapper.findAll('button')
-      let addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      let addRiskButton = buttons.filter(btn => btn.text().includes('Add risk'))[0]!
       await addRiskButton.trigger('click')
       
       expect(wrapper.text()).toContain('First risk')
@@ -1510,7 +1510,7 @@ describe('Workshop Page', () => {
       // Add second risk to the same characteristic
       await riskInput.setValue('Second risk')
       buttons = wrapper.findAll('button')
-      addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      addRiskButton = buttons.filter(btn => btn.text().includes('Add risk'))[0]!
       await addRiskButton.trigger('click')
       
       expect(wrapper.text()).toContain('First risk')
@@ -1530,7 +1530,7 @@ describe('Workshop Page', () => {
       await riskInput.setValue('Risk to be removed')
       
       buttons = wrapper.findAll('button')
-      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add risk'))[0]!
       await addRiskButton.trigger('click')
       
       expect(wrapper.text()).toContain('Risk to be removed')
@@ -1590,7 +1590,7 @@ describe('Workshop Page', () => {
       await riskInput.setValue('Persistent risk')
       
       buttons = wrapper.findAll('button')
-      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add risk'))[0]!
       await addRiskButton.trigger('click')
       
       expect(wrapper.text()).toContain('Persistent risk')
@@ -1621,7 +1621,7 @@ describe('Workshop Page', () => {
       await riskInput.setValue('Test risk')
       
       buttons = wrapper.findAll('button')
-      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add risk'))[0]!
       await addRiskButton.trigger('click')
       
       // Input should be cleared
@@ -1639,7 +1639,7 @@ describe('Workshop Page', () => {
       const initialRiskCount = wrapper.findAll('.risk-item').length
       
       buttons = wrapper.findAll('button')
-      const addRiskButton = buttons.filter(btn => btn.text().includes('Add Risk'))[0]!
+      const addRiskButton = buttons.filter(btn => btn.text().includes('Add risk'))[0]!
       await addRiskButton.trigger('click')
       
       // Risk count should not change
@@ -1671,7 +1671,7 @@ describe('Workshop Page', () => {
       }
       
       // Proceed to risk assessment
-      const riskButton = wrapper.findAll('button').find(btn => btn.text().includes('Risk Assessment'))
+      const riskButton = wrapper.findAll('button').find(btn => btn.text().includes('Risk assessment'))
       await riskButton!.trigger('click')
       
       // Add some risks
@@ -1679,7 +1679,7 @@ describe('Workshop Page', () => {
       const riskInput = riskInputs[0]!
       await riskInput.setValue('Database bottleneck under load')
       
-      const addRiskButton = wrapper.findAll('button').filter(btn => btn.text().includes('Add Risk'))[0]!
+      const addRiskButton = wrapper.findAll('button').filter(btn => btn.text().includes('Add risk'))[0]!
       await addRiskButton.trigger('click')
     }
 

@@ -1,6 +1,7 @@
 export interface Characteristic {
   name: string
   description: string
+  emoji: string
 }
 
 export interface Risk {
