@@ -924,12 +924,12 @@ section {
 .confirmed-selections-section {
   background-color: #f9fafb;
   border: 2px solid #e5e7eb;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 @media (max-width: 768px) {
@@ -941,15 +941,15 @@ section {
 .selection-summary {
   background-color: white;
   border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 1rem;
+  border-radius: 0.375rem;
+  padding: 0.75rem;
 }
 
 .summary-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .summary-header h3 {
@@ -981,16 +981,16 @@ section {
 }
 
 .empty-state {
-  padding: 1.5rem;
+  padding: 1rem;
   text-align: center;
   background-color: white;
   border: 2px dashed #d1d5db;
-  border-radius: 0.5rem;
+  border-radius: 0.375rem;
 }
 
 .empty-state p {
   color: #6b7280;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   font-size: 0.875rem;
   line-height: 1.4;
 }
@@ -1026,18 +1026,18 @@ section {
 .goals-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .area-tag,
 .goal-tag {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0.75rem;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
   background-color: #dcfce7;
   border: 2px solid #16a34a;
-  border-radius: 0.375rem;
+  border-radius: 0.25rem;
   color: #000000;
   font-weight: 500;
   font-size: 0.875rem;
