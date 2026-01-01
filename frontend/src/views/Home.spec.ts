@@ -42,6 +42,9 @@ describe('Home - Landing Page', () => {
     expect(text).toContain(
       'The appropriateness of each characteristic is context specific and involves trade-offs analysis to understand which ones should be accommodated.'
     )
+    expect(text).toContain(
+      'This workshop will help you identify the most appropriate architecture characteristics within the context of a specific system area and strategic goals.'
+    )
   })
 
   it('should display a "Start new workshop" button', () => {

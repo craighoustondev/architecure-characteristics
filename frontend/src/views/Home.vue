@@ -24,6 +24,10 @@ const startWorkshop = async () => {
       <p>
         The appropriateness of each characteristic is context specific and involves trade-offs analysis to understand which ones should be accommodated.
       </p>
+
+      <p>
+        This workshop will help you identify the most appropriate architecture characteristics within the context of a specific system area and strategic goals.
+      </p>
     </div>
 
     <button class="start-button" @click="startWorkshop">Start new workshop</button>
