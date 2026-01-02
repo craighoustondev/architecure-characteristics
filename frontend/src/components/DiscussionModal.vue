@@ -262,7 +262,7 @@ const handleDelete = (id: string) => {
 
 .add-comment-button {
   padding: 0.625rem 1.5rem;
-  background-color: #8b5cf6;
+  background-color: #3498db;
   color: white;
   border: none;
   border-radius: 0.5rem;
@@ -273,7 +273,7 @@ const handleDelete = (id: string) => {
 }
 
 .add-comment-button:hover {
-  background-color: #7c3aed;
+  background-color: #2980b9;
 }
 
 .comments-section h3 {

@@ -92,15 +92,16 @@ defineEmits<{
   color: #4b5563;
   line-height: 1.6;
   font-size: 0.95rem;
+  padding-bottom: 3rem;
 }
 
 .discussion-button {
   position: absolute;
   bottom: 0.75rem;
   right: 0.75rem;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
+  background-color: transparent;
+  color: #6b7280;
+  border: 2px solid #e5e7eb;
   border-radius: 50%;
   width: 2.5rem;
   height: 2.5rem;
@@ -109,13 +110,22 @@ defineEmits<{
   justify-content: center;
   cursor: pointer;
   font-size: 1.25rem;
-  transition: background-color 0.2s, transform 0.2s;
+  transition: background-color 0.2s, transform 0.2s, border-color 0.2s;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .discussion-button:hover {
-  background-color: #2563eb;
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
   transform: scale(1.1);
+}
+
+.discussion-button:focus {
+  outline: none;
+}
+
+.discussion-button:active {
+  transform: scale(0.95);
 }
 
 .discussion-button:active {
@@ -126,7 +136,7 @@ defineEmits<{
   position: absolute;
   top: -0.25rem;
   right: -0.25rem;
-  background-color: #dc2626;
+  background-color: #3498db;
   color: white;
   border-radius: 50%;
   width: 1.25rem;
